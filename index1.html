@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Demon</title>
+    <style>
+        html,body{margin:0;padding:0;}
+        canvas{max-width:100%;}
+    </style>
+</head>
+<body>
+    <script src="https://cdn.bootcss.com/pixi.js/4.8.0/pixi.min.js"></script>
+    <!-- <script src="plugins/pixi-spine.js"></script> -->
+    <!--script src="https://pixijs.io/examples/required/plugins/pixi-spine.js"></script-->
+    <script src="https://pixijs.io/examples/pixi-plugins/pixi-spine.js"></script>
+    <!-- <script src="plugins/dragonbones.js"></script> -->
+    <script>
+        "use strict";
+        (function(P){
+
+           var app=new P.Application({
+               width:1200,
+               height:1200
+           });
+           var cvs=app.view.cloneNode(true);   //用于画边界框
+           var scale=1;
+           cvs.style.position="absolute";
+           cvs.style.pointerEvents="none";
+           cvs.width=cvs.height=1200;
+           document.body.appendChild(cvs);
+           document.body.appendChild(app.view);
+
+           app.stop();
+
+           P.loader
+            .add([
+                {name:"demon",url:"data/Demon.json",metadata:{
+                        spineAtlasSuffix:".txt"
+                    }}
+            ])
+            .load(setup2);
+
+            function setup2(loader,res){
+                var demon=new P.spine.Spine(res.demon.spineData);
+                var bounds = new P.spine.core.SkeletonBounds();
+
+                onResize();
+
+                demon.skeleton.setToSetupPose();
+               //  demon.skeleton.findSlot("leftFrontArm_boundingBox")
+
+                bounds.update(demon.skeleton);
+
+                demon.x=600;
+                demon.y=800;
+                //demon.update(0);
+
+                app.stage.addChild(demon);
+                app.start();
+                demon.state.setAnimation(0, 'steady', false);
+
+                demon.state.addListener({complete:function(entry){
+                        if(entry.animation.name!=="freeze"){
+                            demon.state.setAnimation(0,"steady",false);
+                        }
+                    
+                    }
+                    // ,dispose:function(){
+                        
+                    // }
+                });
+
+                var animations={
+                    "run":"快跑",
+                    "skillAttack1":"攻击1",
+                    "normalAttack":"攻击2",
+                    "uniqueAttack":"发飚",
+                    "hit":"我打",
+                    "dead":"死！",
+                    "stun":"我晕",
+                    "freeze":"定住",
+                    "win":"胜利",
+                    "steady":"常态"
+                };
+
+                var container=new P.Container();
+                var keys=Object.keys(animations),
+                    i=keys.length,
+                    fontSize=40,
+                    style={
+                        fill:"#FFF",
+                        fontSize:fontSize
+                    },
+                    text,
+                    click=function(){
+                        demon.state.setAnimation(0, this._key, false);
+                    };
+
+                while(i--){
+                    if(keys[i]!=="steady"){
+                        text=new P.Text(animations[keys[i]],style);
+                        text.x=fontSize*3*i;
+                        text.buttonMode=text.interactive=true;
+                        text._key=keys[i];
+                        text.on("pointerdown",click);
+                        container.addChild(text);
+                    }
+                }
+                
+                container.x=(app.screen.width-container.width)/2;
+                container.y=app.screen.height*0.8;
+                app.stage.addChild(container);
+
+                //碰撞左臂检测
+                var result=new P.Text("",{
+                    fontSize:40,
+                    fill:"#FFF"
+                });
+                result.x=50;
+                result.y=50;
+                app.view.addEventListener("pointerdown",function(e){
+                    var x=(e.offsetX*scale-demon.x),
+                        y=(e.offsetY*scale-demon.y);
+
+                   if(bounds.containsPoint(x,y)){
+                      result.text="击中！";
+                   }
+                   else{
+                      result.text="还嫩了点";
+                   }
+                });
+
+                app.stage.addChild(result);
+
+                 
+                 //画边界框（只是为了显示框在哪个位置 ）
+                 var ctx=cvs.getContext("2d");
+                 function drawBoundingBox(){
+                    var polygons=bounds.polygons[0],
+                        i=0,
+                        ii=polygons.length;
+
+                     ctx.clearRect(0,0,cvs.width,cvs.height);
+                     ctx.beginPath();
+                     ctx.strokeStyle="green";
+
+                     for(;i<ii;i+=2){
+                         ctx.lineTo(polygons[i]+demon.x,polygons[i+1]+demon.y);
+                     }
+                     ctx.closePath();
+                     ctx.stroke();
+                 }
+
+
+                 app.ticker.add(function(delta){
+                    bounds.update(demon.skeleton);
+                    drawBoundingBox();                     
+                 });
+            
+         }
+
+         function onResize(){
+            scale=app.view.width/app.view.clientWidth;
+         }
+
+         window.addEventListener("resize",onResize,false);
+
+
+
+/******* 以下是 dragonbones.js + pixi.js 的失败代码，有信心者可再加把劲，祝成功  ******/
+//            P.loader
+//             .add([
+//                     {name: 'dragon', url: "assets/Demon_ske.json"},
+//                     {name:"tex",url:"assets/Demon_tex.json"},
+//                     {name:"png",url:"assets/Demon_tex.png"},
+//                     {name:"black",url:"assets/Demon_tex_black.png"}
+//                 ])
+//             .load(setup);
+
+//           function setup(loader,res){
+
+//               var factory = dragonBones.PixiFactory.factory;
+//               var animations={
+//                     "run":"快跑",
+//                     "skillAttack1":"攻击1",
+//                     "normalAttack":"攻击2",
+//                     "uniqueAttack":"发飚",
+//                     "hit":"我打",
+//                     "dead":"死！",
+//                     "stun":"我晕",
+//                     "freeze":"定住",
+//                     "win":"胜利",
+//                     "steady":"常态"
+//                 };
+
+//         factory.parseDragonBonesData(res["dragon"].data);
+//         factory.parseTextureAtlasData(res["tex"].data, res["png"].texture);
+
+//         var armatureDisplay = factory.buildArmatureDisplay("demon");
+//         armatureDisplay.playTimes=1;
+//         armatureDisplay.scale.x=armatureDisplay.scale.y=0.4;
+//         armatureDisplay.x=300;
+//         armatureDisplay.y=300;
+//         armatureDisplay.on(dragonBones.EventObject.COMPLETE,function(){
+//             armatureDisplay.animation.play("steady");
+//         });
+
+//        var _helpPointA=new P.Graphics();
+//        _helpPointA.beginFill(0xFFFF0B, 0.5);
+//        _helpPointA.drawCircle(0, 0,10);
+//        _helpPointA.endFill();
+//        app.stage.addChild(_helpPointA);
+
+//         app.view.addEventListener("click",function(e){
+//             _helpPointA.x=e.offsetX;
+//             _helpPointA.y=e.offsetY;
+
+//            // armatureDisplay.globalToLocal(_helpPointA.x, _helpPointA.y, _helpPointA);
+//         //var a = armatureDisplay.armature.containsPoint(_helpPointA.x,_helpPointA.y);
+
+// //leftFrontArm
+//             app.stage.addChild(armatureDisplay);
+//             app.start();
+//             armatureDisplay.animation.play("steady");
+            
+// armatureDisplay.armature.getSlot("leftFrontArm").display.on("click",function(e){
+//     console.log(e)
+// })
+
+
+//             var container=new P.Container();
+//             var keys=Object.keys(animations),
+//                 i=keys.length,
+//                 style={
+//                     fill:"#FFF",
+//                     fontSize:20
+//                 },
+//                 text,
+//                 click=function(){
+//                     armatureDisplay.animation.play(this._key);
+//                 };
+
+//             while(i--){
+//                 if(keys[i]!=="steady"){
+//                     text=new P.Text(animations[keys[i]],style);
+//                     text.x=60*i;
+//                     text.buttonMode=text.interactive=true;
+//                     text._key=keys[i];
+//                     text.on("click",click);
+//                     container.addChild(text);
+//                 }
+//             }
+            
+//             container.x=50;
+//             container.y=app.screen.height*0.6;
+//             app.stage.addChild(container);
+
+//             //换装
+//             var flag=0;
+//             text=new P.Text("换装",style);
+//             text.x=50;
+//             text.y=30;
+//             text.buttonMode=text.interactive=true;        
+//             text.on("click",function(){
+//                 if(flag){
+//                     flag=0;
+//                     //armatureDisplay.armature.replacedTexture=null;//res.png.texture;
+//                 }
+//                 else
+//                 {
+//                     flag=1;
+//                     armatureDisplay.armature.replacedTexture=res.black.texture;
+//                     //armatureDisplay.texture=res.black.texture;
+//                 }
+//             });
+//             app.stage.addChild(text);
+
+              
+//           }
+
+        })(PIXI);
+    </script>
+</body>
+</html>
