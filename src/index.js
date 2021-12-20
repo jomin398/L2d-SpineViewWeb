@@ -6,9 +6,14 @@
 
         function pOnclick(){
             app.view.parentElement.onclick = null;
+            app.loader.pre((resource,next)=>{
+                resource.crossOrigin = 'anonymous';
+                resource.loadType = PIXI.loaders.Resource.LOAD_TYPE.XHR;
+                next()
+            })
             app.loader.add([
                 {
-                    name: "demon", url: "data/Demon.json", metadata: {
+                    name: "demon", url: "./data/Demon.json", metadata: {
                         spineAtlasSuffix: ".txt"
                     }
                 }
