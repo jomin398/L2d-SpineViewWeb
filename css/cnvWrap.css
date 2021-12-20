@@ -2,9 +2,9 @@
     display: block;
     background-color: black;
     text-align: center;
+    overflow: hidden;
 }
 
-canvas {
-    width: 100%;
-    /* height: 100%; */
+canvas{
+  max-width: 100%;
 }
