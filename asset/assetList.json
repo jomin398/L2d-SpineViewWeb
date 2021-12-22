@@ -1,14 +1,16 @@
-[
-    {
-        "spine": [
-            {
-                "atlasSuffix": ".atlas",
-                "f": "arona",
-                "n": [
-                    "arona",
-                    "아로나"
-                ]
-            }
-        ]
-    }
-]
+{
+    "spine": [
+        {
+            "f": "arona",
+            "n": [
+                "arona",
+                "아로나"
+            ],
+            "m": [
+                "arona_workpage.json",
+                ".atlas"
+            ],
+            "ds":["BlueArchive","블루 아카이브"]
+        }
+    ]
+}
