@@ -1,0 +1,404 @@
+
+Inari_Free.png
+size: 2015,2016
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+cheek_happy
+  rotate: false
+  xy: 868, 1927
+  size: 159, 87
+  orig: 159, 87
+  offset: 0, 0
+  index: -1
+cheek_love
+  rotate: false
+  xy: 1029, 1927
+  size: 159, 87
+  orig: 159, 87
+  offset: 0, 0
+  index: -1
+eye_angry
+  rotate: false
+  xy: 925, 1798
+  size: 191, 127
+  orig: 192, 127
+  offset: 0, 0
+  index: -1
+eye_closed
+  rotate: false
+  xy: 367, 1818
+  size: 185, 123
+  orig: 185, 123
+  offset: 0, 0
+  index: -1
+eye_cry
+  rotate: true
+  xy: 1000, 1604
+  size: 175, 220
+  orig: 175, 220
+  offset: 0, 0
+  index: -1
+eye_curious
+  rotate: false
+  xy: 1678, 1764
+  size: 185, 130
+  orig: 185, 130
+  offset: 0, 0
+  index: -1
+eye_happy
+  rotate: false
+  xy: 1118, 1781
+  size: 181, 127
+  orig: 181, 128
+  offset: 0, 1
+  index: -1
+eye_idle
+  rotate: false
+  xy: 177, 1856
+  size: 188, 120
+  orig: 188, 120
+  offset: 0, 0
+  index: -1
+eye_laugh
+  rotate: false
+  xy: 2, 1864
+  size: 173, 119
+  orig: 173, 119
+  offset: 0, 0
+  index: -1
+eye_smile
+  rotate: false
+  xy: 2, 1864
+  size: 173, 119
+  orig: 173, 119
+  offset: 0, 0
+  index: -1
+eye_love
+  rotate: false
+  xy: 1301, 1781
+  size: 181, 127
+  orig: 181, 128
+  offset: 0, 1
+  index: -1
+eye_sad
+  rotate: false
+  xy: 1751, 1896
+  size: 172, 118
+  orig: 172, 118
+  offset: 0, 0
+  index: -1
+eye_shy
+  rotate: true
+  xy: 1865, 1710
+  size: 184, 145
+  orig: 184, 146
+  offset: 0, 0
+  index: -1
+eye_sulk
+  rotate: false
+  xy: 1563, 1899
+  size: 186, 115
+  orig: 186, 115
+  offset: 0, 0
+  index: -1
+eye_surprise
+  rotate: false
+  xy: 554, 1812
+  size: 183, 123
+  orig: 183, 123
+  offset: 0, 0
+  index: -1
+eye_yell
+  rotate: false
+  xy: 739, 1799
+  size: 184, 126
+  orig: 185, 126
+  offset: 0, 0
+  index: -1
+inari_free_0
+  rotate: false
+  xy: 729, 1937
+  size: 137, 77
+  orig: 137, 77
+  offset: 0, 0
+  index: -1
+inari_free_1
+  rotate: false
+  xy: 1246, 1376
+  size: 315, 218
+  orig: 315, 218
+  offset: 0, 0
+  index: -1
+inari_free_10
+  rotate: false
+  xy: 618, 1632
+  size: 380, 164
+  orig: 380, 164
+  offset: 0, 0
+  index: -1
+inari_free_11
+  rotate: true
+  xy: 1484, 1770
+  size: 127, 192
+  orig: 127, 192
+  offset: 0, 0
+  index: -1
+inari_free_12
+  rotate: false
+  xy: 1159, 485
+  size: 442, 389
+  orig: 442, 389
+  offset: 0, 0
+  index: -1
+inari_free_13
+  rotate: false
+  xy: 1222, 1596
+  size: 526, 166
+  orig: 526, 166
+  offset: 0, 0
+  index: -1
+inari_free_14_1
+  rotate: false
+  xy: 619, 1939
+  size: 108, 75
+  orig: 108, 75
+  offset: 0, 0
+  index: -1
+inari_free_14_2
+  rotate: false
+  xy: 492, 1943
+  size: 125, 71
+  orig: 125, 71
+  offset: 0, 0
+  index: -1
+inari_free_15
+  rotate: true
+  xy: 1563, 1165
+  size: 305, 400
+  orig: 305, 400
+  offset: 0, 0
+  index: -1
+inari_free_16
+  rotate: true
+  xy: 2, 2
+  size: 507, 732
+  orig: 507, 732
+  offset: 0, 0
+  index: -1
+inari_free_17
+  rotate: false
+  xy: 210, 1658
+  size: 406, 152
+  orig: 406, 158
+  offset: 0, 0
+  index: -1
+inari_free_18
+  rotate: false
+  xy: 334, 1435
+  size: 475, 195
+  orig: 475, 195
+  offset: 0, 0
+  index: -1
+inari_free_19
+  rotate: true
+  xy: 688, 1133
+  size: 241, 824
+  orig: 241, 824
+  offset: 0, 0
+  index: -1
+inari_free_20
+  rotate: false
+  xy: 1603, 484
+  size: 410, 390
+  orig: 410, 390
+  offset: 0, 0
+  index: -1
+inari_free_21
+  rotate: false
+  xy: 2, 1211
+  size: 684, 222
+  orig: 684, 222
+  offset: 0, 0
+  index: -1
+inari_free_22
+  rotate: false
+  xy: 2, 877
+  size: 820, 254
+  orig: 820, 254
+  offset: 0, 0
+  index: -1
+inari_free_3
+  rotate: true
+  xy: 2, 1463
+  size: 193, 330
+  orig: 193, 330
+  offset: 0, 0
+  index: -1
+inari_free_4
+  rotate: false
+  xy: 2, 1716
+  size: 206, 138
+  orig: 206, 138
+  offset: 0, 0
+  index: -1
+inari_free_5
+  rotate: true
+  xy: 713, 511
+  size: 363, 444
+  orig: 363, 444
+  offset: 0, 0
+  index: -1
+inari_free_5_1
+  rotate: true
+  xy: 1190, 1910
+  size: 104, 371
+  orig: 104, 371
+  offset: 0, 0
+  index: -1
+inari_free_6
+  rotate: true
+  xy: 1750, 1472
+  size: 236, 250
+  orig: 236, 250
+  offset: 0, 0
+  index: -1
+inari_free_7
+  rotate: false
+  xy: 824, 876
+  size: 974, 255
+  orig: 974, 255
+  offset: 0, 0
+  index: -1
+inari_free_8
+  rotate: true
+  xy: 811, 1388
+  size: 206, 433
+  orig: 206, 433
+  offset: 0, 0
+  index: -1
+inari_free_9
+  rotate: true
+  xy: 2, 529
+  size: 346, 709
+  orig: 346, 709
+  offset: 0, 0
+  index: -1
+mouth_angry
+  rotate: true
+  xy: 309, 1979
+  size: 35, 37
+  orig: 35, 37
+  offset: 0, 0
+  index: -1
+mouth_cry
+  rotate: false
+  xy: 262, 1981
+  size: 45, 33
+  orig: 45, 33
+  offset: 0, 0
+  index: -1
+mouth_curious
+  rotate: false
+  xy: 101, 1991
+  size: 23, 23
+  orig: 23, 24
+  offset: 0, 0
+  index: -1
+mouth_happy
+  rotate: false
+  xy: 388, 1972
+  size: 48, 42
+  orig: 48, 42
+  offset: 0, 0
+  index: -1
+mouth_idle
+  rotate: false
+  xy: 30, 1997
+  size: 35, 17
+  orig: 35, 17
+  offset: 0, 0
+  index: -1
+mouth_laugh
+  rotate: false
+  xy: 348, 1978
+  size: 38, 36
+  orig: 38, 36
+  offset: 0, 0
+  index: -1
+mouth_love
+  rotate: false
+  xy: 154, 1985
+  size: 29, 29
+  orig: 29, 29
+  offset: 0, 0
+  index: -1
+mouth_sad
+  rotate: false
+  xy: 185, 1984
+  size: 40, 30
+  orig: 40, 30
+  offset: 0, 0
+  index: -1
+mouth_shy
+  rotate: false
+  xy: 126, 1988
+  size: 26, 26
+  orig: 26, 26
+  offset: 0, 0
+  index: -1
+mouth_smile
+  rotate: false
+  xy: 2, 2000
+  size: 26, 14
+  orig: 26, 14
+  offset: 0, 0
+  index: -1
+mouth_sulk
+  rotate: false
+  xy: 67, 1996
+  size: 32, 18
+  orig: 32, 18
+  offset: 0, 0
+  index: -1
+mouth_surprise
+  rotate: true
+  xy: 227, 1983
+  size: 31, 33
+  orig: 31, 33
+  offset: 0, 0
+  index: -1
+mouth_yell
+  rotate: false
+  xy: 438, 1972
+  size: 52, 42
+  orig: 52, 42
+  offset: 0, 0
+  index: -1
+
+Inari_Free2.png
+size: 1721,1127
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+inari_free_14
+  rotate: true
+  xy: 1143, 519
+  size: 606, 576
+  orig: 606, 576
+  offset: 0, 0
+  index: -1
+inari_free_2_1
+  rotate: false
+  xy: 577, 14
+  size: 564, 1111
+  orig: 564, 1111
+  offset: 0, 0
+  index: -1
+inari_free_2_2
+  rotate: false
+  xy: 2, 2
+  size: 573, 1123
+  orig: 573, 1123
+  offset: 0, 0
+  index: -1

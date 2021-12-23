@@ -10,7 +10,8 @@ canvas {
   max-width: 100%;
 }
 
-.startCover {
+.startCover,
+.startCover .cover {
   display: flex;
   color: white;
   position: absolute;
@@ -27,6 +28,13 @@ canvas {
   align-items: center;
   justify-content: center;
   flex-direction: column;
+  /* padding: 5px; */
+  /* margin: 5px; */
+}
+
+.startCover .cover {
+  z-index: 9999;
+  height: 100%;
 }
 
 .startCover p {
@@ -39,28 +47,57 @@ canvas {
   width: 100%;
   text-align: center;
   color: #fff;
+  margin: 10px 0 0 0;
+}
+.startCover .dragBoxWrap{
+  position: relative;
+  width: 95%;
+  height: 100px;
+  display: inline-block;
+  margin: 5px;
+  border: 2px dashed white;
 }
 
-.startCover .dragBox,
 .cselContiner {
   width: 95%;
   height: 100px;
   display: inline-flex;
   margin: 5px;
   border: 2px dashed white;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.dragBoxWrap .cselContiner{
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  margin: unset;
+  border: unset;
   align-items: center;
   justify-content: center;
   flex-direction: column;
 }
 
+.cselContinerWrap .cselContiner{
+  height: 110px;
+  display: inline-flex;
+  margin: unset;
+  column-gap:2px;
+}
 .cselContiner {
   position: relative;
-  margin: 10px 0 0 0;
+  margin: 0;
 }
-
-.dragBox .item,
+.dragBoxWrap .cselContiner .item,
 .cselContiner .item {
   padding: 5px;
   height: 100px;
   background-color: #87CEEB;
+  /* border: 2px solid white; */
+}
+
+.sortOnMove {
+  opacity: 0.7;
 }

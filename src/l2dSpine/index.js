@@ -1,31 +1,31 @@
-const l2dSpineModule = (function() {
-  const getLangCode = function(langstr) {
+const client = {
+  doc: document,
+  app: null,
+  width: null,
+  ismob: false,
+  lang: navigator.language,
+  langIndex: 0,
+  //default
+  scale: 0.2,
+  model: {
+    list: null,
+    userSel: null,
+    now: {
+      n: null,
+      //single
+      sAni: null,
+      //all
+      aAni: null,
+      //now
+      nAni: { n: '', o: null }
+    }
+  }
+}
+const l2dSpineModule = (function () {
+  const getLangCode = function (langstr) {
     langstr = langstr.toLowerCase();
     return /^en\b/.test(langstr) ? 0 : /ko-kr/.test(langstr) ? 1 : /ja-jp/.test(langstr) ? 2 : 0;
   }
-  const client = {
-    doc: document,
-    app: null,
-    width: null,
-    ismob: false,
-    lang: navigator.language,
-    langIndex: getLangCode(navigator.language),
-    //default
-    scale: 0.2,
-    model: {
-      list: null,
-      now: {
-        n: null,
-        //single
-        sAni: null,
-        //all
-        aAni: null,
-        //now
-        nAni: { n: '', o: null }
-      }
-    }
-  }
-
   function scaleCalc(aw, cw) {
     let sclv = aw / cw;
     let offset = 0;
@@ -63,7 +63,9 @@ const l2dSpineModule = (function() {
    * @class l2dSpine
    */
   class l2dSpine {
-    constructor() {}
+    constructor(basePath) {
+      this.basePath = basePath ? basePath : './asset';
+    }
     autoResize(model) {
       client.scale = scaleCalc(client.app.screen.width, client.doc.body.clientWidth);
       if (model) {
@@ -114,11 +116,10 @@ const l2dSpineModule = (function() {
         client.model.now.nAni.n = animation;
       });
       window.addEventListener('orientationchange', () => autoResize(model), false);
-      client.doc.querySelector('.cnvWrap button').innerText = 'reload';
-      client.doc.querySelector('.cnvWrap button').onclick = () => location.reload();
     }
     slBoxRender(json) {
-      const cselBox = document.querySelector('.cselContiner');
+      const self = this;
+      const cselBox = document.querySelector('.cselContinerWrap .cselContiner');
       console.log(json);
       let slModels = [];
       for (let i in json) {
@@ -127,70 +128,154 @@ const l2dSpineModule = (function() {
             n: k.f,
             d: [k.ds[client.langIndex], k.n[client.langIndex]],
             etype: i,
-            p: k.f + '/' + k.m[0],
+            p: `${self.basePath}/${k.f}/${k.m[0]}`,
             fsufix: k.m[1]
           })
         }
       };
       let ctn = slModels.length;
-      console.log(`${ctn} chr${ctn>1?'s are ':' is'} loaded.`);
+      console.log(`${ctn} chr${ctn > 1 ? 's are ' : ' is'} loaded.`);
       cselBox.querySelector('p#onload').remove();
-      
+      const sortSetup = {
+        group: 'chr',
+        filter: '.sortDone',
+        animation: 200,
+        ghostClass: 'sortOnMove',
+        onEnd: onsortDone
+      }
+      client.model.list = [];
       slModels.forEach(e => {
-          let el = document.createElement('div');
-          el.id = e.n;
-          el.className = 'item';
-          for (let i = 0, a = ['span', 'p']; i < a.length; i++) {
-              let elIn = document.createElement(a[i]);
-              elIn.innerText = i==0?`[${e.d[i]}]`:e.d[i];
-              el.appendChild(elIn);
+        let el = document.createElement('div');
+        el.id = e.n;
+        el.className = 'item';
+        el.dataset.mp = e.p;
+        el.dataset.sufix = e.fsufix;
+        for (let i = 0, a = ['span', 'p']; i < a.length; i++) {
+          let elIn = document.createElement(a[i]);
+          elIn.innerText = i == 0 ? `[${e.d[i]}]` : e.d[i];
+          el.appendChild(elIn);
+        }
+        cselBox.appendChild(el);
+        client.model.list.push({
+          name: e.n, url: e.p, metadata: {
+            spineAtlasSuffix: e.fsufix
           }
-          cselBox.appendChild(el)
+        });
       });
+      client.model.userSel = client.model.list[0];
+      function onsortDone(evt) {
+        const d = 'sortDone';
+        var eli = evt.item;
+        if (evt.to.parentElement.parentElement.className == 'startCover') {
+          eli.classList.add(d);
+          cselBox.childNodes.forEach(c => c.classList ? c.classList.add(d) : c.className = d);
+          evt.to.parentElement.append((() => {
+            let el = document.createElement('div');
+            el.className = 'cover';
+            let fns = [
+              //yes
+              function (e) {
+                let ep = e.parentElement, target = null;
+                target = ep.parentElement.querySelector('.cselContiner').childNodes[0];
+
+                let obj = {
+                  name: target.id, url: target.dataset.mp, metadata: {
+                    spineAtlasSuffix: target.dataset.sufix
+                  }
+                };
+                client.model.userSel = obj;
+                self.renderStart(client.model.userSel);
+              },
+              //no
+              function (e) {
+                console.log(e);
+                let ep = e.parentElement;
+                ep.parentElement.querySelector('.cselContiner').childNodes.forEach(c => {
+                  c.classList.remove('sortDone')
+                  document.querySelector('.cselContinerWrap .cselContiner').appendChild(c);
+                  //c.remove();
+                });
+                ep.remove();
+              }
+            ];
+            for (let i = 0, a = ['p', 'button', 'button'], b = ['Are You Sure?', 'Yes', 'No']; i < a.length; i++) {
+              let element = document.createElement(a[i]);
+              element.innerText = b[i];
+              if (i != 0) {
+                element.addEventListener("click", (e) => fns[i - 1](e.target))
+              }
+              el.appendChild(element)
+            }
+            return el;
+          })())
+        };
+
+      };
+
+      $('.startCover .dragBoxWrap .cselContiner').sortable(sortSetup);
+      $('.cselContinerWrap .cselContiner').sortable(sortSetup);
     }
+    renderStart(modeldata) {
+      console.log(modeldata)
+      document.querySelector('.cnvWrap .startCover').remove();
+      document.querySelector('.cselContinerWrap .cselContiner').childNodes.forEach(c => {
+        console.log(c)
+        c.remove();
+      });
+      document.querySelector('.cselContinerWrap .cselContiner').style.visibility = 'collapse';
+      document.querySelector('.cselContinerWrap').append((() => {
+        let el = document.createElement('button');
+        el.innerText = 'reload';
+        el.onclick = () => location.reload();
+        return el;
+      })())
+      console.log('On rendering')
+      client.app.view.parentElement.onclick = null;
+      client.app.loader.add(modeldata).load(this.onAssetsLoaded);
+      client.app.stage.interactive = true;
+      //console.log(self.app)
+      this.autoResize();
+    };
     init() {
       const self = this;
+      client.langIndex = getLangCode(navigator.language);
       client.width = Number(client.doc.body.clientWidth);
       client.app = new PIXI.Application({
         resizeTo: client.doc.querySelector('.cnvWrap')
       });
       const cover = document.createElement('div');
       cover.className = 'startCover';
-      let stmsg = ['Click To Start Render.', 'Or', 'Drag chrCard from bottom to here.'];
+      let stmsg = ['Click To Start Render.', 'Or', 'Drag chrCard from bottom to here.', 'start'];
       ((stmsg) => {
         for (let i = 0, a = stmsg; i < a.length; i++) {
-          let el = document.createElement('p')
+          let el = i != a.length - 1 ? document.createElement('p') : document.createElement('button');
           el.innerText = a[i];
+          if (i == a.length - 1) {
+            el.onclick = () => self.renderStart(client.model.userSel);
+          }
           cover.appendChild(el);
         }
         let el = document.createElement('div');
-        el.className = 'dragBox';
+        el.className = 'dragBoxWrap';
+        el.appendChild((() => {
+          let e = document.createElement('div');
+          e.className = 'cselContiner';
+          return e;
+        })())
         cover.appendChild(el);
       })(stmsg);
       // const btnwarp = document.createElement('div');
       // btnwarp.className = 'btnwarp';
 
       client.doc.querySelector('.cnvWrap').append(client.app.view, cover);
-      document.querySelector('.cselContiner').append((()=>{
-        let e= document.createElement('p');
-        e.id='onload';
-      e.innerText = 'On loading...';
+      document.querySelector('.cselContinerWrap .cselContiner').append((() => {
+        let e = document.createElement('p');
+        e.id = 'onload';
+        e.innerText = 'On loading...';
         return e;
       })());
       makeRequest('get', './asset/assetList.json').then(xhr => this.slBoxRender(JSON.parse(xhr.response)))
-      // let st = client.doc.createElement('button');
-      // st.innerText = 'start';
-      // const pOnclick = function (modeldata) {
-      //     console.log('onclick');
-      //     client.app.view.parentElement.onclick = null;
-      //     client.app.loader.add(modeldata).load(self.onAssetsLoaded);
-      //     client.app.stage.interactive = true;
-      //     //console.log(self.app)
-      //     self.autoResize();
-      // };
-      // st.addEventListener('click', () => pOnclick(setups.tempChrModelData));
-      // btnwarp.append(st);
-    }
+    };
   };
   return l2dSpine;
 })();
