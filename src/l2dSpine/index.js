@@ -26,26 +26,41 @@ const l2dSpineModule = (function () {
     langstr = langstr.toLowerCase();
     return /^en\b/.test(langstr) ? 0 : /ko-kr/.test(langstr) ? 1 : /ja-jp/.test(langstr) ? 2 : 0;
   }
-  function scaleCalc(aw, cw) {
+  function autoResize(model, arSetList) {
+    client.scale = scaleCalc(client.app.screen.width, client.doc.body.clientWidth, arSetList);
+    if (model) {
+      console.log('orientation is changed');
+      model.scale.set(client.scale);
+    }
+  }
+  function scaleCalc(aw, cw, arSetList) {
     let sclv = aw / cw;
     let offset = 0;
-    console.log(sclv);
+    if (!arSetList) {
+      arSetList = [
+        0.04,
+        0.15,
+        0.25
+      ]
+    }
     if (sclv >= 2) {
       //mob vertical;
       console.log(1);
-      offset = 0.05;
+      offset = arSetList[0];
       client.ismob = true;
     } else if (sclv >= 0.8) {
       //mob hoz;
       console.log(2);
-      offset = 0.15;
+      offset = arSetList[1];
       client.ismob = true;
       //client.scale - 0.45;
     } else {
       console.log(3);
-      offset = 0.25;
+      offset = arSetList[2];
     }
-    sclv = Number(((aw / cw) / 10).toFixed(2)) + offset;
+    sclv = Number(((aw / cw) / 10).toFixed(2));
+    console.log(offset)
+    sclv = sclv + offset;
     console.log(sclv);
     return sclv;
   }
@@ -66,23 +81,33 @@ const l2dSpineModule = (function () {
     constructor(basePath) {
       this.basePath = basePath ? basePath : './asset';
     }
-    autoResize(model) {
-      client.scale = scaleCalc(client.app.screen.width, client.doc.body.clientWidth);
-      if (model) {
-        console.log('orientation is changed');
-        model.scale.set(client.scale);
-      }
-    }
     onAssetsLoaded(loader, res) {
+      const self = this;
       console.log('init');
       // create a spine boy
       const Modelkeys = Object.keys(res);
+
       const model = new PIXI.spine.Spine(res[Modelkeys[0]].spineData);
+     
+
+      let ar = res[Modelkeys[0]].metadata.ar;
+      ar = ar ? ar.split(',').map(x => Number(x)) : null;
       const loopAnimations = [];
       client.model.now.n = Object.keys(client.app.loader.resources)[0];
       client.model.now.sAni = Object.keys(res[Modelkeys[0]].data.animations);
-      client.model.now.aAni = [];
-
+      client.model.now.aAni = [].concat(client.model.now.sAni, loopAnimations);
+      client.model.now.aAni.forEach(e => {
+        let el = document.createElement('div');
+        el.className = 'anis';
+        el.innerText = e;
+        el.addEventListener('click', (a) => {
+          // console.log(model.state.getCurrent(model.state.tracks.length))
+          model.state.setAnimation(0, a.target.innerText, false)
+        })
+        document.querySelector('.cselContinerWrap .cselContiner').appendChild(el)
+      })
+      document.querySelector('.cselContinerWrap .cselContiner').style.visibility = 'visible';
+      document.querySelector('.cselContinerWrap .cselContiner').style.flexWrap = 'wrap';
       // set the position
       model.x = (client.app.screen.width / 2); // client.app.screen.width/2; // this.app.screen.width;
       model.y = client.app.screen.height; // client.app.screen.height;
@@ -101,7 +126,7 @@ const l2dSpineModule = (function () {
         //console.log( this.model.now.sAni)
         loopAnimations.push('Idle_00', 'Idle_02');
       }
-      client.model.now.aAni = [].concat(client.model.now.sAni, loopAnimations);
+
       client.model.now.nAni.n = '';
 
       // Press the screen to play a random animation
@@ -115,7 +140,7 @@ const l2dSpineModule = (function () {
 
         client.model.now.nAni.n = animation;
       });
-      window.addEventListener('orientationchange', () => autoResize(model), false);
+      window.addEventListener('orientationchange', () => { autoResize(model, ar) }, false);
     }
     slBoxRender(json) {
       const self = this;
@@ -129,11 +154,13 @@ const l2dSpineModule = (function () {
             d: [k.ds[client.langIndex], k.n[client.langIndex]],
             etype: i,
             p: `${self.basePath}/${k.f}/${k.m[0]}`,
-            fsufix: k.m[1]
+            fsufix: k.m[1],
+            a: k.a || null
           })
         }
       };
       let ctn = slModels.length;
+
       console.log(`${ctn} chr${ctn > 1 ? 's are ' : ' is'} loaded.`);
       cselBox.querySelector('p#onload').remove();
       const sortSetup = {
@@ -150,6 +177,9 @@ const l2dSpineModule = (function () {
         el.className = 'item';
         el.dataset.mp = e.p;
         el.dataset.sufix = e.fsufix;
+        if (e.a) {
+          el.dataset.ar = e.a;
+        }
         for (let i = 0, a = ['span', 'p']; i < a.length; i++) {
           let elIn = document.createElement(a[i]);
           elIn.innerText = i == 0 ? `[${e.d[i]}]` : e.d[i];
@@ -158,7 +188,8 @@ const l2dSpineModule = (function () {
         cselBox.appendChild(el);
         client.model.list.push({
           name: e.n, url: e.p, metadata: {
-            spineAtlasSuffix: e.fsufix
+            spineAtlasSuffix: e.fsufix,
+            ar: e.a || null
           }
         });
       });
@@ -180,7 +211,8 @@ const l2dSpineModule = (function () {
 
                 let obj = {
                   name: target.id, url: target.dataset.mp, metadata: {
-                    spineAtlasSuffix: target.dataset.sufix
+                    spineAtlasSuffix: target.dataset.sufix,
+                    ar: target.dataset.ar ? target.dataset.ar : null
                   }
                 };
                 client.model.userSel = obj;
@@ -190,12 +222,16 @@ const l2dSpineModule = (function () {
               function (e) {
                 console.log(e);
                 let ep = e.parentElement;
+                console.log(ep.parentElement.querySelector('.cselContiner'))
                 ep.parentElement.querySelector('.cselContiner').childNodes.forEach(c => {
                   c.classList.remove('sortDone')
                   document.querySelector('.cselContinerWrap .cselContiner').appendChild(c);
                   //c.remove();
                 });
                 ep.remove();
+                console.log( document.querySelector('.cselContinerWrap .cselContiner').children)
+                Array.from(document.querySelector('.cselContinerWrap .cselContiner').children).forEach(c => {
+                  c.classList.remove('sortDone')});
               }
             ];
             for (let i = 0, a = ['p', 'button', 'button'], b = ['Are You Sure?', 'Yes', 'No']; i < a.length; i++) {
@@ -217,31 +253,38 @@ const l2dSpineModule = (function () {
     }
     renderStart(modeldata) {
       console.log(modeldata)
+      let continer = '.cselContinerWrap .cselContiner';
       document.querySelector('.cnvWrap .startCover').remove();
-      document.querySelector('.cselContinerWrap .cselContiner').childNodes.forEach(c => {
-        console.log(c)
-        c.remove();
-      });
-      document.querySelector('.cselContinerWrap .cselContiner').style.visibility = 'collapse';
+      document.querySelector('.cselContinerWrap .cselContiner').remove();
       document.querySelector('.cselContinerWrap').append((() => {
+        let el = document.createElement('div');
+        el.className = 'cselContiner';
+        return el;
+      })())
+      document.querySelector('.cselContinerWrap .cselContiner').style.visibility = 'collapse';
+      document.querySelector('.cnvWrap').insertAdjacentElement('afterend', (() => {
         let el = document.createElement('button');
+        el.className = 'btn reload';
         el.innerText = 'reload';
         el.onclick = () => location.reload();
         return el;
       })())
+
       console.log('On rendering')
       client.app.view.parentElement.onclick = null;
       client.app.loader.add(modeldata).load(this.onAssetsLoaded);
       client.app.stage.interactive = true;
-      //console.log(self.app)
-      this.autoResize();
+      let ar = modeldata.metadata.ar;
+      ar = ar ? ar.split(',').map(x => Number(x)) : null;
+      autoResize(null, ar);
     };
     init() {
       const self = this;
       client.langIndex = getLangCode(navigator.language);
       client.width = Number(client.doc.body.clientWidth);
       client.app = new PIXI.Application({
-        resizeTo: client.doc.querySelector('.cnvWrap')
+        resizeTo: client.doc.querySelector('.cnvWrap'),
+        // height:600
       });
       const cover = document.createElement('div');
       cover.className = 'startCover';

@@ -4,10 +4,12 @@
   background-color: black;
   text-align: center;
   overflow: hidden;
+  /* height: inherit; */
 }
 
 canvas {
   max-width: 100%;
+  /* height: fit-content; */
 }
 
 .startCover,
@@ -40,6 +42,10 @@ canvas {
 .startCover p {
   margin: 5px 0;
 }
+.btn.reload{
+  display: block;
+  margin: 0 auto;
+}
 
 .cselContinerWrap {
   position: relative;
@@ -48,6 +54,7 @@ canvas {
   text-align: center;
   color: #fff;
   margin: 10px 0 0 0;
+  height: initial;
 }
 .startCover .dragBoxWrap{
   position: relative;
@@ -81,10 +88,11 @@ canvas {
 }
 
 .cselContinerWrap .cselContiner{
-  height: 110px;
+  height: fit-content;
   display: inline-flex;
   margin: unset;
   column-gap:2px;
+  /* flex-wrap: wrap; */
 }
 .cselContiner {
   position: relative;
@@ -96,6 +104,11 @@ canvas {
   height: 100px;
   background-color: #87CEEB;
   /* border: 2px solid white; */
+}
+.cselContinerWrap .cselContiner .anis{
+  padding: 5px;
+  height: fit-content;
+  background-color: #87CEEB;
 }
 
 .sortOnMove {
