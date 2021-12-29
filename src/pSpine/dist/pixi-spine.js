@@ -6595,9 +6595,8 @@ var pixi_spine;
                                     return callback && callback(null);
                                 }
                                 page.baseTexture = texture;
-                                if (!texture.hasLoaded) {
-                                    texture.width = page.width;
-                                    texture.height = page.height;
+                                if (!texture.valid) {
+                                    texture.setSize(page.width, page.height);
                                 }
                                 _this.pages.push(page);
                                 page.setFilters();
@@ -6664,7 +6663,7 @@ var pixi_spine;
                                 region.texture = new PIXI.Texture(region.page.baseTexture, frame2, crop, trim, rotate);
                             }
                             region.index = parseInt(reader.readValue());
-                            region.texture._updateUvs();
+                            region.texture.updateUvs();
                             _this.regions.push(region);
                         }
                     }
@@ -6735,7 +6734,7 @@ var pixi_spine;
                     tex.scaleMode = PIXI.SCALE_MODES.NEAREST;
                 }
                 else {
-                    tex.mipmap = true;
+                    tex.mipmap = PIXI.MIPMAP_MODES.POW2;
                     if (filter == core.TextureFilter.MipMapNearestNearest) {
                         tex.scaleMode = PIXI.SCALE_MODES.NEAREST;
                     }
@@ -7820,28 +7819,6 @@ var pixi_spine;
                 _this.tempColor = new core.Color(0, 0, 0, 0);
                 return _this;
             }
-            MeshAttachment.prototype.updateUVs = function (region, uvs) {
-                var regionUVs = this.regionUVs;
-                var n = regionUVs.length;
-                if (!uvs || uvs.length != n) {
-                    uvs = core.Utils.newFloatArray(n);
-                }
-                if (region == null) {
-                    return;
-                }
-                var texture = region.texture;
-                var r = texture._uvs;
-                var w1 = region.width, h1 = region.height, w2 = region.originalWidth, h2 = region.originalHeight;
-                var x = region.offsetX, y = region.pixiOffsetY;
-                for (var i = 0; i < n; i += 2) {
-                    var u = this.regionUVs[i], v = this.regionUVs[i + 1];
-                    u = (u * w2 - x) / w1;
-                    v = (v * h2 - y) / h1;
-                    uvs[i] = (r.x0 * (1 - u) + r.x1 * u) * (1 - v) + (r.x3 * (1 - u) + r.x2 * u) * v;
-                    uvs[i + 1] = (r.y0 * (1 - u) + r.y1 * u) * (1 - v) + (r.y3 * (1 - u) + r.y2 * u) * v;
-                }
-                return uvs;
-            };
             MeshAttachment.prototype.getParentMesh = function () {
                 return this.parentMesh;
             };
@@ -8201,18 +8178,33 @@ var pixi_spine;
         function SpineSprite() {
             var _this = _super !== null && _super.apply(this, arguments) || this;
             _this.region = null;
+            _this.attachment = null;
             return _this;
         }
         return SpineSprite;
     }(PIXI.Sprite));
     pixi_spine.SpineSprite = SpineSprite;
+    var gp = PIXI.GraphicsGeometry.prototype;
+    if (!gp.invalidate) {
+        var tmp_1 = [];
+        gp.invalidate = function () {
+            var t = this.graphicsData;
+            tmp_1.push(0);
+            this.graphicsData = tmp_1;
+            this.clear();
+            this.graphicsData = t;
+        };
+    }
     var SpineMesh = (function (_super) {
         __extends(SpineMesh, _super);
         function SpineMesh(texture, vertices, uvs, indices, drawMode) {
-            return _super.call(this, texture, vertices, uvs, indices, drawMode) || this;
+            var _this = _super.call(this, texture, vertices, uvs, indices, drawMode) || this;
+            _this.region = null;
+            _this.attachment = null;
+            return _this;
         }
         return SpineMesh;
-    }(PIXI.mesh.Mesh));
+    }(PIXI.SimpleMesh));
     pixi_spine.SpineMesh = SpineMesh;
     var Spine = (function (_super) {
         __extends(Spine, _super);
@@ -8248,7 +8240,7 @@ var pixi_spine;
                 else if (attachment instanceof pixi_spine.core.MeshAttachment) {
                     var mesh = _this.createMesh(slot, attachment);
                     slot.currentMesh = mesh;
-                    slot.currentMeshName = attachment.name;
+                    slot.currentMeshId = attachment.id;
                     slotContainer.addChild(mesh);
                 }
                 else if (attachment instanceof pixi_spine.core.ClippingAttachment) {
@@ -8260,16 +8252,20 @@ var pixi_spine;
                     continue;
                 }
             }
-            _this.autoUpdate = true;
             _this.tintRgb = new Float32Array([1, 1, 1]);
+            _this.autoUpdate = true;
+            _this.visible = true;
             return _this;
         }
         Object.defineProperty(Spine.prototype, "autoUpdate", {
             get: function () {
-                return (this.updateTransform === Spine.prototype.autoUpdateTransform);
+                return this._autoUpdate;
             },
             set: function (value) {
-                this.updateTransform = value ? Spine.prototype.autoUpdateTransform : PIXI.Container.prototype.updateTransform;
+                if (value !== this._autoUpdate) {
+                    this._autoUpdate = value;
+                    this.updateTransform = value ? Spine.prototype.autoUpdateTransform : PIXI.Container.prototype.updateTransform;
+                }
             },
             enumerable: false,
             configurable: true
@@ -8327,7 +8323,7 @@ var pixi_spine;
             else {
                 light = this.tintRgb;
             }
-            var thack = PIXI.TransformBase && (this.transformHack() == 1);
+            var thack = false;
             for (var i = 0, n = slots.length; i < n; i++) {
                 var slot = slots[i];
                 var attachment = slot.getAttachment();
@@ -8344,6 +8340,7 @@ var pixi_spine;
                         if (slot.currentMesh) {
                             slot.currentMesh.visible = false;
                             slot.currentMesh = null;
+                            slot.currentMeshId = undefined;
                             slot.currentMeshName = undefined;
                         }
                         var ar = region;
@@ -8363,42 +8360,12 @@ var pixi_spine;
                             slot.currentSprite = slot.sprites[spriteName];
                             slot.currentSpriteName = spriteName;
                         }
-                    }
-                    if (slotContainer.transform) {
-                        var transform = slotContainer.transform;
-                        var transAny = transform;
-                        var lt = null;
-                        if (transAny.matrix2d) {
-                            lt = transAny.matrix2d;
-                            transAny._dirtyVersion++;
-                            transAny.version = transAny._dirtyVersion;
-                            transAny.isStatic = true;
-                            transAny.operMode = 0;
-                        }
-                        else {
-                            if (thack) {
-                                if (transAny.position) {
-                                    transform = new PIXI.TransformBase();
-                                    transform._parentID = -1;
-                                    transform._worldID = slotContainer.transform._worldID;
-                                    slotContainer.transform = transform;
-                                }
-                                lt = transform.localTransform;
-                            }
-                            else {
-                                transAny.setFromMatrix(slot.bone.matrix);
-                            }
-                        }
-                        if (lt) {
-                            slot.bone.matrix.copy(lt);
+                        else if (slot.currentSpriteName === ar.name && !slot.hackRegion) {
+                            this.setSpriteRegion(attachment, slot.currentSprite, region);
                         }
                     }
-                    else {
-                        var lt = slotContainer.localTransform || new PIXI.Matrix();
-                        slot.bone.matrix.copy(lt);
-                        slotContainer.localTransform = lt;
-                        slotContainer.displayObjectUpdateTransform = SlotContainerUpdateTransformV3;
-                    }
+                    var transform = slotContainer.transform;
+                    transform.setFromMatrix(slot.bone.matrix);
                     if (slot.currentSprite.color) {
                         spriteColor = slot.currentSprite.color;
                     }
@@ -8415,42 +8382,37 @@ var pixi_spine;
                         slot.currentSprite.visible = false;
                         slot.currentSprite = null;
                         slot.currentSpriteName = undefined;
-                        if (slotContainer.transform) {
-                            var transform = new PIXI.TransformStatic();
-                            transform._parentID = -1;
-                            transform._worldID = slotContainer.transform._worldID;
-                            slotContainer.transform = transform;
-                        }
-                        else {
-                            slotContainer.localTransform = new PIXI.Matrix();
-                            slotContainer.displayObjectUpdateTransform = PIXI.DisplayObject.prototype.updateTransform;
-                        }
+                        var transform = new PIXI.Transform();
+                        transform._parentID = -1;
+                        transform._worldID = slotContainer.transform._worldID;
+                        slotContainer.transform = transform;
                     }
-                    if (!slot.currentMeshName || slot.currentMeshName !== attachment.name) {
-                        var meshName = attachment.name;
+                    if (!slot.currentMeshId || slot.currentMeshId !== attachment.id) {
+                        var meshId = attachment.id;
                         if (slot.currentMesh) {
                             slot.currentMesh.visible = false;
                         }
                         slot.meshes = slot.meshes || {};
-                        if (slot.meshes[meshName] !== undefined) {
-                            slot.meshes[meshName].visible = true;
+                        if (slot.meshes[meshId] !== undefined) {
+                            slot.meshes[meshId].visible = true;
                         }
                         else {
                             var mesh = this.createMesh(slot, attachment);
                             slotContainer.addChild(mesh);
                         }
-                        slot.currentMesh = slot.meshes[meshName];
-                        slot.currentMeshName = meshName;
+                        slot.currentMesh = slot.meshes[meshId];
+                        slot.currentMeshName = attachment.name;
+                        slot.currentMeshId = meshId;
                     }
                     attachment.computeWorldVerticesOld(slot, slot.currentMesh.vertices);
                     if (slot.currentMesh.color) {
                         spriteColor = slot.currentMesh.color;
                     }
-                    else if (PIXI.VERSION[0] !== '3') {
-                        var tintRgb = slot.currentMesh.tintRgb;
-                        tintRgb[0] = light[0] * slot.color.r * attColor.r;
-                        tintRgb[1] = light[1] * slot.color.g * attColor.g;
-                        tintRgb[2] = light[2] * slot.color.b * attColor.b;
+                    else {
+                        tempRgb[0] = light[0] * slot.color.r * attColor.r;
+                        tempRgb[1] = light[1] * slot.color.g * attColor.g;
+                        tempRgb[2] = light[2] * slot.color.b * attColor.b;
+                        slot.currentMesh.tint = PIXI.utils.rgb2hex(tempRgb);
                     }
                     slot.currentMesh.blendMode = slot.blendMode;
                 }
@@ -8461,6 +8423,9 @@ var pixi_spine;
                         slotContainer.addChild(slot.currentGraphics);
                     }
                     this.updateGraphics(slot, attachment);
+                    slotContainer.alpha = 1.0;
+                    slotContainer.visible = true;
+                    continue;
                 }
                 else {
                     slotContainer.visible = false;
@@ -8531,8 +8496,16 @@ var pixi_spine;
         };
         ;
         Spine.prototype.setSpriteRegion = function (attachment, sprite, region) {
+            if (sprite.attachment === attachment && sprite.region === region) {
+                return;
+            }
             sprite.region = region;
+            sprite.attachment = attachment;
             sprite.texture = region.texture;
+            sprite.rotation = attachment.rotation * pixi_spine.core.MathUtils.degRad;
+            sprite.position.x = attachment.x;
+            sprite.position.y = attachment.y;
+            sprite.alpha = attachment.color.a;
             if (!region.size) {
                 sprite.scale.x = attachment.scaleX * attachment.width / region.originalWidth;
                 sprite.scale.y = -attachment.scaleY * attachment.height / region.originalHeight;
@@ -8543,11 +8516,14 @@ var pixi_spine;
             }
         };
         Spine.prototype.setMeshRegion = function (attachment, mesh, region) {
+            if (mesh.attachment === attachment && mesh.region === region) {
+                return;
+            }
             mesh.region = region;
+            mesh.attachment = attachment;
             mesh.texture = region.texture;
-            region.texture._updateUvs();
-            attachment.updateUVs(region, mesh.uvs);
-            mesh.dirty++;
+            region.texture.updateUvs();
+            mesh.uvBuffer.update(attachment.regionUVs);
         };
         Spine.prototype.autoUpdateTransform = function () {
             if (Spine.globalAutoUpdate) {
@@ -8569,13 +8545,7 @@ var pixi_spine;
             }
             var texture = region.texture;
             var sprite = this.newSprite(texture);
-            sprite.rotation = attachment.rotation * pixi_spine.core.MathUtils.degRad;
-            sprite.anchor.x = 0.5;
-            sprite.anchor.y = 0.5;
-            sprite.position.x = attachment.x;
-            sprite.position.y = attachment.y;
-            sprite.alpha = attachment.color.a;
-            sprite.region = attachment.region;
+            sprite.anchor.set(0.5);
             this.setSpriteRegion(attachment, sprite, attachment.region);
             slot.sprites = slot.sprites || {};
             slot.sprites[defName] = sprite;
@@ -8589,13 +8559,15 @@ var pixi_spine;
                 slot.hackAttachment = null;
                 slot.hackRegion = null;
             }
-            var strip = this.newMesh(region.texture, new Float32Array(attachment.regionUVs.length), new Float32Array(attachment.regionUVs.length), new Uint16Array(attachment.triangles), PIXI.mesh.Mesh.DRAW_MODES.TRIANGLES);
-            strip.canvasPadding = 1.5;
+            var strip = this.newMesh(region.texture, new Float32Array(attachment.regionUVs.length), attachment.regionUVs, new Uint16Array(attachment.triangles), PIXI.DRAW_MODES.TRIANGLES);
+            if (typeof strip._canvasPadding !== "undefined") {
+                strip._canvasPadding = 1.5;
+            }
             strip.alpha = attachment.color.a;
             strip.region = attachment.region;
             this.setMeshRegion(attachment, strip, region);
             slot.meshes = slot.meshes || {};
-            slot.meshes[attachment.name] = strip;
+            slot.meshes[attachment.id] = strip;
             return strip;
         };
         ;
@@ -8612,12 +8584,12 @@ var pixi_spine;
             return graphics;
         };
         Spine.prototype.updateGraphics = function (slot, clip) {
-            var vertices = slot.currentGraphics.graphicsData[0].shape.points;
+            var geom = slot.currentGraphics.geometry;
+            var vertices = geom.graphicsData[0].shape.points;
             var n = clip.worldVerticesLength;
             vertices.length = n;
             clip.computeWorldVertices(slot, 0, n, vertices, 0, 2);
-            slot.currentGraphics.dirty++;
-            slot.currentGraphics.clearDirty++;
+            geom.invalidate();
         };
         Spine.prototype.hackTextureBySlotIndex = function (slotIndex, texture, size) {
             if (texture === void 0) { texture = null; }
@@ -8656,6 +8628,40 @@ var pixi_spine;
                 return false;
             }
             return this.hackTextureBySlotIndex(index, texture, size);
+        };
+        Spine.prototype.hackTextureAttachment = function (slotName, attachmentName, texture, size) {
+            if (size === void 0) { size = null; }
+            var slotIndex = this.skeleton.findSlotIndex(slotName);
+            var attachment = this.skeleton.getAttachmentByName(slotName, attachmentName);
+            attachment.region.texture = texture;
+            var slot = this.skeleton.slots[slotIndex];
+            if (!slot) {
+                return false;
+            }
+            var currentAttachment = slot.getAttachment();
+            if (attachmentName === currentAttachment.name) {
+                var region = attachment.region;
+                if (texture) {
+                    region = new pixi_spine.core.TextureRegion();
+                    region.texture = texture;
+                    region.size = size;
+                    slot.hackRegion = region;
+                    slot.hackAttachment = currentAttachment;
+                }
+                else {
+                    slot.hackRegion = null;
+                    slot.hackAttachment = null;
+                }
+                if (slot.currentSprite && slot.currentSprite.region != region) {
+                    this.setSpriteRegion(currentAttachment, slot.currentSprite, region);
+                    slot.currentSprite.region = region;
+                }
+                else if (slot.currentMesh && slot.currentMesh.region != region) {
+                    this.setMeshRegion(currentAttachment, slot.currentMesh, region);
+                }
+                return true;
+            }
+            return false;
         };
         Spine.prototype.newContainer = function () {
             return new PIXI.Container();
@@ -8746,16 +8752,17 @@ var pixi_spine;
 })(pixi_spine || (pixi_spine = {}));
 var pixi_spine;
 (function (pixi_spine) {
-    var Resource = PIXI.loaders.Resource;
     function isJson(resource) {
-        return resource.type == Resource.TYPE.JSON;
+        return resource.type === PIXI.LoaderResource.TYPE.JSON;
     }
     function isBuffer(resource) {
-        return resource.xhrType == Resource.XHR_RESPONSE_TYPE.BUFFER;
+        return resource.xhrType === PIXI.LoaderResource.XHR_RESPONSE_TYPE.BUFFER;
     }
-    Resource.setExtensionXhrType('skel', Resource.XHR_RESPONSE_TYPE.BUFFER);
-    function atlasParser() {
-        return function atlasParser(resource, next) {
+    PIXI.LoaderResource.setExtensionXhrType('skel', PIXI.LoaderResource.XHR_RESPONSE_TYPE.BUFFER);
+    var AtlasParser = (function () {
+        function AtlasParser() {
+        }
+        AtlasParser.use = function (resource, next) {
             if (!resource.data) {
                 return next();
             }
@@ -8803,7 +8810,7 @@ var pixi_spine;
             atlasPath = atlasPath.replace(this.baseUrl, '');
             var atlasOptions = {
                 crossOrigin: resource.crossOrigin,
-                xhrType: Resource.XHR_RESPONSE_TYPE.TEXT,
+                xhrType: PIXI.LoaderResource.XHR_RESPONSE_TYPE.TEXT,
                 metadata: metadata.spineMetadata || null,
                 parentResource: resource
             };
@@ -8843,8 +8850,9 @@ var pixi_spine;
                 });
             }
         };
-    }
-    pixi_spine.atlasParser = atlasParser;
+        return AtlasParser;
+    }());
+    pixi_spine.AtlasParser = AtlasParser;
     function imageLoaderAdapter(loader, namePrefix, baseUrl, imageOptions) {
         if (baseUrl && baseUrl.lastIndexOf('/') !== (baseUrl.length - 1)) {
             baseUrl += '/';
@@ -8854,9 +8862,9 @@ var pixi_spine;
             var url = baseUrl + line;
             var cachedResource = loader.resources[name];
             if (cachedResource) {
-                function done() {
+                var done = function () {
                     callback(cachedResource.texture.baseTexture);
-                }
+                };
                 if (cachedResource.texture) {
                     done();
                 }
@@ -8882,7 +8890,7 @@ var pixi_spine;
             baseUrl += '/';
         }
         return function (line, callback) {
-            callback(PIXI.BaseTexture.fromImage(line, crossOrigin));
+            callback(PIXI.BaseTexture.from(line, crossOrigin));
         };
     }
     pixi_spine.syncImageLoaderAdapter = syncImageLoaderAdapter;
@@ -8896,9 +8904,8 @@ var pixi_spine;
         };
     }
     pixi_spine.staticImageLoader = staticImageLoader;
-    if (PIXI.loaders.Loader) {
-        PIXI.loaders.Loader.addPixiMiddleware(atlasParser);
-        PIXI.loader.use(atlasParser());
+    if (PIXI.Loader) {
+        PIXI.Loader.registerPlugin(AtlasParser);
     }
 })(pixi_spine || (pixi_spine = {}));
 //# sourceMappingURL=pixi-spine.js.map

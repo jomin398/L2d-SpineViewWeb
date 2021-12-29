@@ -283,7 +283,7 @@ const l2dSpineModule = (function () {
       client.langIndex = getLangCode(navigator.language);
       client.width = Number(client.doc.body.clientWidth);
       client.app = new PIXI.Application({
-        resizeTo: client.doc.querySelector('.cnvWrap'),
+        // resizeTo: client.doc.querySelector('.cnvWrap'),
         // height:600
       });
       const cover = document.createElement('div');

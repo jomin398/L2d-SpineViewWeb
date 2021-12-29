@@ -1,4 +1,3 @@
-/// <reference types="pixi.js" />
 declare module PIXI.spine.core {
     class Animation {
         name: string;
@@ -490,7 +489,6 @@ declare module PIXI.spine.core {
         private parentMesh;
         tempColor: Color;
         constructor(name: string);
-        updateUVs(region: TextureRegion, uvs: ArrayLike<number>): ArrayLike<number>;
         getParentMesh(): MeshAttachment;
         setParentMesh(parentMesh: MeshAttachment): void;
         copy(): Attachment;
@@ -824,7 +822,7 @@ declare module PIXI.spine.core {
         setSkin(newSkin: Skin): void;
         getAttachmentByName(slotName: string, attachmentName: string): Attachment;
         getAttachment(slotIndex: number, attachmentName: string): Attachment;
-        setAttachment(slotName: string, attachmentName: string): void;
+        setAttachment(slotName: string, attachmentName?: string): void;
         findIkConstraint(constraintName: string): IkConstraint;
         findTransformConstraint(constraintName: string): TransformConstraint;
         findPathConstraint(constraintName: string): PathConstraint;
@@ -1000,6 +998,7 @@ declare module PIXI.spine.core {
         currentGraphics: any;
         clippingContainer: any;
         meshes: any;
+        currentMeshId: number;
         currentMeshName: string;
         sprites: any;
         currentSpriteName: string;
@@ -1344,24 +1343,30 @@ declare namespace PIXI.loaders {
     }
 }
 declare module PIXI.spine {
-    const Resource: typeof PIXI.loaders.Resource;
-    export function atlasParser(): (resource: PIXI.loaders.Resource, next: () => any) => any;
-    export function imageLoaderAdapter(loader: any, namePrefix: any, baseUrl: any, imageOptions: any): (line: string, callback: (baseTexture: PIXI.BaseTexture) => any) => void;
-    export function syncImageLoaderAdapter(baseUrl: any, crossOrigin: any): (line: any, callback: any) => void;
-    export function staticImageLoader(pages: {
+    class AtlasParser {
+        static use(this: PIXI.Loader, resource: PIXI.LoaderResource, next: () => any): any;
+    }
+    function imageLoaderAdapter(loader: any, namePrefix: any, baseUrl: any, imageOptions: any): (line: string, callback: (baseTexture: PIXI.BaseTexture) => any) => void;
+    function syncImageLoaderAdapter(baseUrl: any, crossOrigin: any): (line: any, callback: any) => void;
+    function staticImageLoader(pages: {
         [key: string]: (PIXI.BaseTexture | PIXI.Texture);
     }): (line: any, callback: any) => void;
-    export {};
 }
 interface Math {
     fround(n: number): number;
 }
 declare module PIXI.spine {
-    class SpineSprite extends PIXI.Sprite {
-        region: core.TextureRegion;
+    interface ISpineDisplayObject extends PIXI.DisplayObject {
+        region?: core.TextureRegion;
+        attachment?: core.Attachment;
     }
-    class SpineMesh extends PIXI.mesh.Mesh {
-        region: core.TextureRegion;
+    class SpineSprite extends PIXI.Sprite implements ISpineDisplayObject {
+        region?: core.TextureRegion;
+        attachment?: core.Attachment;
+    }
+    class SpineMesh extends PIXI.SimpleMesh implements ISpineDisplayObject {
+        region?: core.TextureRegion;
+        attachment?: core.Attachment;
         constructor(texture: PIXI.Texture, vertices?: Float32Array, uvs?: Float32Array, indices?: Uint16Array, drawMode?: number);
     }
     class Spine extends PIXI.Container {
@@ -1375,6 +1380,7 @@ declare module PIXI.spine {
         slotContainers: Array<PIXI.Container>;
         tempClipContainers: Array<PIXI.Container>;
         localDelayLimit: number;
+        private _autoUpdate;
         private _visible;
         constructor(spineData: core.SkeletonData);
         get autoUpdate(): boolean;
@@ -1396,12 +1402,13 @@ declare module PIXI.spine {
         updateGraphics(slot: core.Slot, clip: core.ClippingAttachment): void;
         hackTextureBySlotIndex(slotIndex: number, texture?: PIXI.Texture, size?: PIXI.Rectangle): boolean;
         hackTextureBySlotName(slotName: string, texture?: PIXI.Texture, size?: PIXI.Rectangle): boolean;
+        hackTextureAttachment(slotName: string, attachmentName: string, texture: any, size?: PIXI.Rectangle): boolean;
         newContainer(): PIXI.Container;
         newSprite(tex: PIXI.Texture): SpineSprite;
         newGraphics(): PIXI.Graphics;
         newMesh(texture: PIXI.Texture, vertices?: Float32Array, uvs?: Float32Array, indices?: Uint16Array, drawMode?: number): SpineMesh;
         transformHack(): number;
         hackAttachmentGroups(nameSuffix: string, group: any, outGroup: any): any[][];
-        destroy(options?: PIXI.DestroyOptions | boolean): void;
+        destroy(options?: any): void;
     }
 }
