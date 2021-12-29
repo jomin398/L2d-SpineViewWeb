@@ -88,10 +88,10 @@ const l2dSpineModule = (function () {
       const Modelkeys = Object.keys(res);
 
       const model = new PIXI.spine.Spine(res[Modelkeys[0]].spineData);
-     
+
 
       let ar = res[Modelkeys[0]].metadata.ar;
-      ar = ar ? ar.split(',').map(x => Number(x)) : null;
+      ar = ar ?(typeof ar =='string'?ar.split(',').map(x => Number(x)):ar) : null;
       const loopAnimations = [];
       client.model.now.n = Object.keys(client.app.loader.resources)[0];
       client.model.now.sAni = Object.keys(res[Modelkeys[0]].data.animations);
@@ -108,12 +108,24 @@ const l2dSpineModule = (function () {
       })
       document.querySelector('.cselContinerWrap .cselContiner').style.visibility = 'visible';
       document.querySelector('.cselContinerWrap .cselContiner').style.flexWrap = 'wrap';
+      document.querySelector('.cselContinerWrap .cselContiner').style.flexDirection= 'column';
+      document.querySelector('.cselContinerWrap .cselContiner').style.alignItems='flex-start';
       // set the position
       model.x = (client.app.screen.width / 2); // client.app.screen.width/2; // this.app.screen.width;
       model.y = client.app.screen.height; // client.app.screen.height;
 
       model.scale.set(client.scale);
       //model.scale.set(0.25);
+      /* debug*/
+      model.drawDebug = true;
+      // model.drawBones = true;
+      //model.drawRegionAttachments = true;
+      //model.drawClipping = true;
+     //model.drawMeshHull = true;
+      // model.drawMeshTriangles = true;
+      //model.drawPaths = true;
+      model.drawBoundingBoxes = true;
+      console.log(model)
       client.app.stage.addChild(model);
       //console.log(model)
       console.log(res[Modelkeys[0]].data.animations);
@@ -229,9 +241,10 @@ const l2dSpineModule = (function () {
                   //c.remove();
                 });
                 ep.remove();
-                console.log( document.querySelector('.cselContinerWrap .cselContiner').children)
+                console.log(document.querySelector('.cselContinerWrap .cselContiner').children)
                 Array.from(document.querySelector('.cselContinerWrap .cselContiner').children).forEach(c => {
-                  c.classList.remove('sortDone')});
+                  c.classList.remove('sortDone')
+                });
               }
             ];
             for (let i = 0, a = ['p', 'button', 'button'], b = ['Are You Sure?', 'Yes', 'No']; i < a.length; i++) {
@@ -275,7 +288,7 @@ const l2dSpineModule = (function () {
       client.app.loader.add(modeldata).load(this.onAssetsLoaded);
       client.app.stage.interactive = true;
       let ar = modeldata.metadata.ar;
-      ar = ar ? ar.split(',').map(x => Number(x)) : null;
+      ar = ar ? (typeof ar =='string'?ar.split(',').map(x => Number(x)):ar) : null;
       autoResize(null, ar);
     };
     init() {
@@ -283,8 +296,7 @@ const l2dSpineModule = (function () {
       client.langIndex = getLangCode(navigator.language);
       client.width = Number(client.doc.body.clientWidth);
       client.app = new PIXI.Application({
-        // resizeTo: client.doc.querySelector('.cnvWrap'),
-        // height:600
+        // resizeTo: client.doc.querySelector('.cnvWrap')
       });
       const cover = document.createElement('div');
       cover.className = 'startCover';
