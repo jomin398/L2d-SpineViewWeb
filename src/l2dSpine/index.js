@@ -106,10 +106,7 @@ const l2dSpineModule = (function () {
         })
         document.querySelector('.cselContinerWrap .cselContiner').appendChild(el)
       })
-      document.querySelector('.cselContinerWrap .cselContiner').style.visibility = 'visible';
-      document.querySelector('.cselContinerWrap .cselContiner').style.flexWrap = 'wrap';
-      document.querySelector('.cselContinerWrap .cselContiner').style.flexDirection= 'column';
-      document.querySelector('.cselContinerWrap .cselContiner').style.alignItems='flex-start';
+      document.querySelector('.cselContinerWrap .cselContiner').classList.add('ml')
       // set the position
       model.x = (client.app.screen.width / 2); // client.app.screen.width/2; // this.app.screen.width;
       model.y = client.app.screen.height; // client.app.screen.height;
