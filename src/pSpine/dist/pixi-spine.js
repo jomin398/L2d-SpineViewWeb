@@ -5299,10 +5299,10 @@ var pixi_spine;
                 if (skeletonMap != null) {
                     skeletonData.hash = skeletonMap.hash;
                     skeletonData.version = skeletonMap.spine;
-                    if (skeletonData.version.substr(0, 3) !== '3.8') {
-                        var error = "PixiJS Spine plugin supports only format for Spine 3.8. Your model has version " + skeletonMap.spine + ". Please look in pixi-spine repository README for another branch.";
-                        console.error(error);
-                    }
+                    // if (skeletonData.version.substr(0, 3) !== '3.8') {
+                    //     var error = "PixiJS Spine plugin supports only format for Spine 3.8. Your model has version " + skeletonMap.spine + ". Please look in pixi-spine repository README for another branch.";
+                    //     console.error(error);
+                    // }
                     // if (skeletonData.version === '3.8.75') {
                     //     var error = "Unsupported skeleton data, 3.8.75 is deprecated, please export with a newer version of Spine.";
                     //     console.error(error);
