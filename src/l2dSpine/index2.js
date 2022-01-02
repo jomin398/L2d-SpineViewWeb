@@ -1,6 +1,6 @@
 class l2dSpine {
     constructor() {
-        this.core= null;
+        this.core = null;
         this.basePath = './asset';
         this.langIndex = 0;
         this.width = 800;
@@ -42,30 +42,30 @@ class l2dSpine {
         // create a spine boy
         console.log(this)
         const Modelkeys = Object.keys(res);
-        
+
         const model = new PIXI.spine.Spine(res[Modelkeys[0]].spineData);
-  
+
         let ar = res[Modelkeys[0]].metadata.ar;
-        ar = ar ?(typeof ar =='string'?ar.split(',').map(x => Number(x)):ar) : null;
+        ar = ar ? (typeof ar == 'string' ? ar.split(',').map(x => Number(x)) : ar) : null;
         const loopAnimations = [];
         this.model.now.n = Object.keys(this.app.loader.resources)[0];
         this.model.now.sAni = Object.keys(res[Modelkeys[0]].data.animations);
         this.model.now.aAni = [].concat(this.model.now.sAni, loopAnimations);
         this.model.now.aAni.forEach(e => {
-          let el = document.createElement('div');
-          el.className = 'anis';
-          el.innerText = e;
-          el.addEventListener('click', (a) => {
-            // console.log(model.state.getCurrent(model.state.tracks.length))
-            model.state.setAnimation(0, a.target.innerText, false)
-          })
-          document.querySelector('.cselContinerWrap .cselContiner').appendChild(el)
+            let el = document.createElement('div');
+            el.className = 'anis';
+            el.innerText = e;
+            el.addEventListener('click', (a) => {
+                // console.log(model.state.getCurrent(model.state.tracks.length))
+                model.state.setAnimation(0, a.target.innerText, false)
+            })
+            document.querySelector('.cselContinerWrap .cselContiner').appendChild(el)
         })
         document.querySelector('.cselContinerWrap .cselContiner').classList.add('ml')
         // set the position
         model.x = (this.app.screen.width / 2); // this.app.screen.width/2; // this.app.screen.width;
         model.y = this.app.screen.height; // this.app.screen.height;
-  
+        console.log(this.scale)
         model.scale.set(this.scale);
         //model.scale.set(0.25);
         /* debug*/
@@ -73,7 +73,7 @@ class l2dSpine {
         // model.drawBones = true;
         //model.drawRegionAttachments = true;
         //model.drawClipping = true;
-       //model.drawMeshHull = true;
+        //model.drawMeshHull = true;
         // model.drawMeshTriangles = true;
         //model.drawPaths = true;
         model.drawBoundingBoxes = true;
@@ -81,31 +81,35 @@ class l2dSpine {
         this.app.stage.addChild(model);
         //console.log(model)
         console.log(res[Modelkeys[0]].data.animations);
-  
-  
+
+
         var bool = this.model.now.n == 'arona';
         console.log('model is arona? :', bool);
         if (bool) {
-          //singleAnimations = singleAnimations.filter(a => !['Dummy', 'Dev'].includes(a));
-          //console.log( this.model.now.sAni)
-          loopAnimations.push('Idle_00', 'Idle_02');
+            //singleAnimations = singleAnimations.filter(a => !['Dummy', 'Dev'].includes(a));
+            //console.log( this.model.now.sAni)
+            loopAnimations.push('Idle_00', 'Idle_02');
         }
-  
+
         this.model.now.nAni.n = '';
-  
+
         // Press the screen to play a random animation
         this.app.stage.on('pointerdown', () => {
-          let animation = '';
-          do {
-            animation = this.model.now.aAni[Math.floor(Math.random() * this.model.now.aAni.length)];
-          } while (animation === this.model.now.nAni.n);
-          console.log(animation);
-          model.state.setAnimation(0, animation, loopAnimations.includes(animation));
-  
-          this.model.now.nAni.n = animation;
+            let animation = '';
+            do {
+                animation = this.model.now.aAni[Math.floor(Math.random() * this.model.now.aAni.length)];
+            } while (animation === this.model.now.nAni.n);
+            console.log(animation);
+            model.state.setAnimation(0, animation, loopAnimations.includes(animation));
+
+            this.model.now.nAni.n = animation;
         });
-        window.addEventListener('orientationchange', () => { this.resizeModule.autoResize(model, ar) }, false);
-      }
+        window.addEventListener('orientationchange', () => {
+            this.resizeModule.autoResize(model, ar);
+            this.scale = this.resizeModule.scale;
+
+        }, false);
+    }
     renderStart(modeldata) {
         const self = this;
         console.log(modeldata)
@@ -128,11 +132,13 @@ class l2dSpine {
 
         console.log('On rendering')
         this.app.view.parentElement.onclick = null;
-        this.app.loader.add(modeldata).load(this.onAssetsLoaded.bind(this));
-        this.app.stage.interactive = true;
         let ar = modeldata.metadata.ar;
         ar = ar ? (typeof ar == 'string' ? ar.split(',').map(x => Number(x)) : ar) : null;
         this.resizeModule.autoResize(null, ar);
+        this.scale = this.resizeModule.scale;
+        this.app.loader.add(modeldata).load(this.onAssetsLoaded.bind(this));
+        this.app.stage.interactive = true;
+
     };
     slBoxRender(json) {
         const self = this;
@@ -244,30 +250,31 @@ class l2dSpine {
 
         $('.startCover .dragBoxWrap .cselContiner').sortable(sortSetup);
         $('.cselContinerWrap .cselContiner').sortable(sortSetup);
-    }
+    };
     init() {
         const self = this;
+        let cover = null;
+        let stmsg = ['Click To Start Render.', 'Or', 'Drag chrCard from bottom to here.', 'start','CardContiner'];
+
         this.langIndex = this.getLangCode(navigator.language);
         this.width = Number(document.body.clientWidth);
-        this.app = new PIXI.Application({
-            width:1200,
-               height:1200
-        });
+        this.app = new PIXI.Application();
         this.resizeModule = new resizeMgr();
         this.resizeModule.init(this.app);
 
-        const cover = document.createElement('div');
-        cover.className = 'startCover';
-        let stmsg = ['Click To Start Render.', 'Or', 'Drag chrCard from bottom to here.', 'start'];
+        // cover = document.createElement('div');
+        // cover.className = 'startCover';
         ((stmsg, doc) => {
-            for (let i = 0, a = stmsg; i < a.length; i++) {
-                let el = i != a.length - 1 ? doc.createElement('p') : doc.createElement('button');
-                el.innerText = a[i];
+            cover = document.createElement('div');
+            cover.className = 'startCover';
+            stmsg.forEach((e,i,a)=>{
+                let el = i != a.length - 2 ? doc.createElement('p') : doc.createElement('button');
+                el.innerText = e;
                 if (i == a.length - 1) {
                     el.onclick = () => self.renderStart(self.model.userSel);
                 }
                 cover.appendChild(el);
-            }
+            });
             let el = doc.createElement('div');
             el.className = 'dragBoxWrap';
             el.appendChild((() => {
@@ -275,18 +282,16 @@ class l2dSpine {
                 e.className = 'cselContiner';
                 return e;
             })())
-            cover.appendChild(el);
+            cover.lastChild.replaceWith(el);
+            doc.querySelector('.cnvWrap').append(self.app.view, cover);
+            doc.querySelector('.cselContinerWrap .cselContiner').append((() => {
+                let e = doc.createElement('p');
+                e.id = 'onload';
+                e.innerText = 'On loading...';
+                return e;
+            })());
         })(stmsg, document);
-        // const btnwarp = document.createElement('div');
-        // btnwarp.className = 'btnwarp';
 
-        document.querySelector('.cnvWrap').append(this.app.view, cover);
-        document.querySelector('.cselContinerWrap .cselContiner').append((() => {
-            let e = document.createElement('p');
-            e.id = 'onload';
-            e.innerText = 'On loading...';
-            return e;
-        })());
-        this.makeRequest('get', './asset/assetList.json').then(xhr => this.slBoxRender(JSON.parse(xhr.response)))
+        this.makeRequest('get', './asset/assetList.json').then(xhr => this.slBoxRender(JSON.parse(xhr.response)));
     };
 };

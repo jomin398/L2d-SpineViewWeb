@@ -40,7 +40,7 @@ class resizeMgr {
     return sclv;
   }
   autoResize(model, arSetList) {
-    console.log(this.app.view.width / this.app.view.clientWidth)
+    // console.log(this.app.view.width / this.app.view.clientWidth)
     this.scale = this.scaleCalc(arSetList);
     console.log(this.scale);
     if (model) {
