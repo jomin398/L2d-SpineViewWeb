@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="./src/requester/index.js"></script>
+    <title>Document</title>
+    <script>
+        window.onload = () => {
+            (async function(){
+                res = null;
+                res = await new requester().reqFromGD(null, 'https://drive.google.com/file/d/1elbseW4qwhLotjAd87RowrMK1ahySR5Q/view?usp=sharing', 'blob');
+                zip = await (()=>{
+                    console.log('download done. 1/2')
+                    return JSZip.loadAsync(res.response)})();
+                    console.log('download done. 2/2')
+                console.log(zip.files);
+                // console.log(window.URL.createObjectURL(zip))
+            })()
+        
+        // .then(res => Promise.resolve(res.response))
+        //         // .then(JSZip.loadAsync)
+        //         // .then(function (zip) {
+        //         //     console.log(zip.files);
+        //         // })
+    }
+    </script>
+</head>
+
+<body>
+
+</body>
+
+</html>
