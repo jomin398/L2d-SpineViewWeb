@@ -6,27 +6,86 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.1.3/pixi.min.js"></script>
+    <script src="./src/pSpine/dist/pixi-spine.js"></script>
     <script src="./src/requester/index.js"></script>
     <title>Document</title>
     <script>
         window.onload = () => {
-            (async function(){
+            var zip = null;
+            (async function () {
                 res = null;
                 res = await new requester().reqFromGD(null, 'https://drive.google.com/file/d/1elbseW4qwhLotjAd87RowrMK1ahySR5Q/view?usp=sharing', 'blob');
-                zip = await (()=>{
+                zip = await (() => {
                     console.log('download done. 1/2')
-                    return JSZip.loadAsync(res.response)})();
-                    console.log('download done. 2/2')
+                    return JSZip.loadAsync(res.response)
+                })();
+                console.log('download done. 2/2')
                 console.log(zip.files);
+                // is spine?
+
+                atlas = Object.keys(zip.files).find(x => x.includes('atlas'));
+                bool = atlas.includes('atlas');
+                console.log(bool);
+                if (bool) {
+                    skelJson = Object.keys(zip.files).find(x => x.includes('json'));
+                    skelJson = await zip.file(skelJson).async('blob').then(window.URL.createObjectURL)
+                    atlas = await zip.file(atlas).async('blob').then(window.URL.createObjectURL)
+
+                    skelJson = await new requester().req(null, skelJson).then(res => {
+                        window.URL.revokeObjectURL(skelJson);
+                        return res.response
+                    });
+                    atlas = await new requester().req(null, atlas).then(res => {
+                        window.URL.revokeObjectURL(atlas);
+                        return res.response
+                    });
+                    spineRebuilder(skelJson, atlas);
+                }
                 // console.log(window.URL.createObjectURL(zip))
             })()
-        
-        // .then(res => Promise.resolve(res.response))
-        //         // .then(JSZip.loadAsync)
-        //         // .then(function (zip) {
-        //         //     console.log(zip.files);
-        //         // })
-    }
+            function spineRebuilder(skelJson, atlas) {
+                //your skeleton.json file here
+                var rawSkeletonData = JSON.parse(skelJson);
+                //console.log(rawSkeletonData );
+                let iArr = null;
+                (async function () {
+                    iArr = await Promise.all(
+                        rawSkeletonData.skeleton.images.map(e => {
+                            return zip.file(e).async('blob').then(window.URL.createObjectURL)
+                        }));
+                    console.log(rawSkeletonData.skeleton.images);
+                    console.log(iArr)
+                    applyer();
+                })()
+
+                //apply url to modelLoader;
+                function applyer() {
+                    var spineAtlas = new PIXI.spine.core.TextureAtlas(atlas, function (line, callback) {
+                        // if(rawSkeletonData.skeleton.images.includes(line)){
+                        //     line = iArr[rawSkeletonData.skeleton.images.findIndex(e=>e=line)]
+                        // }
+                        // // pass the image here.
+                        // console.log(line)
+                        callback(PIXI.BaseTexture.from(line));
+                    }); // specify path, image.png will be added automatically
+
+                    var spineAtlasLoader = new PIXI.spine.core.AtlasAttachmentLoader(spineAtlas)
+                    var spineJsonParser = new PIXI.spine.core.SkeletonJson(spineAtlasLoader);
+
+                    // in case if you want everything scaled up two times
+                    // spineJsonParser.scale = 2.0;
+                    // rawSkeletonData.skeleton.images = iArr;
+                    console.log( spineAtlasLoader)
+                    var spineData = spineJsonParser.readSkeletonData(rawSkeletonData);
+
+                    // now we can create spine instance
+                    var spine = new PIXI.spine.Spine(spineData);
+                    // console.log(spine);
+                };
+            }
+        }
     </script>
 </head>
 
