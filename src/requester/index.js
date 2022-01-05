@@ -52,24 +52,47 @@ class requester extends gdMgr {
      * @param {string} url target url
      * @param {string} type a response type.
      * @param {string} data a post data.
+     * @param {Object} process on load process object.
+     * @param {function(e)} process.loading a loading function
+     * @param {function(e)} process.loadStart a loadStart function
      * @returns {Promise}
      * @example
-     * req('get','http://www.example.com/')
+     * req('get','http://www.example.com/',null,null,{loadStart:e=>console.log(`now onstart Downloading ${e.total} bytes`),loading:e=>console.log(`${Math.round(100 * e.loaded / e.total)}% Complete`)})
      */
-    req(method, url, type, data = {}) {
+    req(method, url, type, data = {},process) {
         const xhr = new XMLHttpRequest();
         return new Promise((resolve, reject) => {
             if (type) {
                 xhr.responseType = type;
             }
+            if(process){
+                if(process.loadStart){
+                    xhr.onloadstart = process.loadStart;
+                }
+                if(process.loading){
+                    xhr.onprogress =process.loading;
+                }
+            }
+            
             xhr.open(method ? method : 'get', url, true);
             xhr.onload = () => resolve(xhr);
             xhr.onerror = () => reject(xhr);
             data != {} ? xhr.send(JSON.stringify(data)) : xhr.send();
         });
     };
-    reqFromGD(method, url, type, data = {}) {
+    /**
+     * 
+     * @param {string} method method to get, post.
+     * @param {string} url target url
+     * @param {string} type a response type.
+     * @param {string} data a post data.
+     * @param {Object} process on load process object.
+     * @param {function(e)} process.loading a loading function
+     * @param {function(e)} process.loadStart a loadStart function
+     * @returns {Promise}
+     */
+    reqFromGD(method, url, type, data = {},process) {
         url = this.getLink(url);
-        return this.req(method, url, type, data)
+        return this.req(method, url, type, data,process)
     }
 };

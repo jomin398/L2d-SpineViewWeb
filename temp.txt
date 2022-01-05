@@ -1,0 +1,33 @@
+/*(async function () {
+                var zip = null;
+                res = null;
+                atlas = null;
+                res = await new requester().reqFromGD(null, atob(modelB64), 'blob');
+                zip = await (() => {
+                    console.log('download done. 1/2')
+                    return JSZip.loadAsync(res.response)
+                })();
+                console.log('download done. 2/2')
+                console.log(zip.files);
+                // is spine?
+                assetPrefixs = ['atlas', 'json'];
+                atlas = Object.keys(zip.files).find(x => x.includes(assetPrefixs[0]))
+                bool = atlas.includes(assetPrefixs[0]);
+                console.log(bool);
+                if (bool) {
+                    skelJson = Object.keys(zip.files).find(x => x.includes('json'));
+                    skelJson = await zip.file(skelJson).async('blob').then(window.URL.createObjectURL)
+                    atlas = await zip.file(atlas).async('blob').then(window.URL.createObjectURL)
+ 
+                    skelJson = await new requester().req(null, skelJson).then(res => {
+                        window.URL.revokeObjectURL(skelJson);
+                        return res.response
+                    });
+                    atlas = await new requester().req(null, atlas).then(res => {
+                        window.URL.revokeObjectURL(atlas);
+                        return res.response
+                    });
+                    spineRebuilder(skelJson, atlas);
+                }
+            })();
+            */
