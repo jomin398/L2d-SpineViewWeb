@@ -71,49 +71,84 @@
                         // in case if you want everything scaled up two times
                         // spineJsonParser.scale = 2.0;
                         // rawSkeletonData.skeleton.images = iArr;
+                        //rawSkeletonData.skeleton.images = iArr;
                         spineAtlasLoader.atlas.pages.filter(x => x).map((e, i) => {
                             e.baseTexture.resource.source.src = iArr[i];
 
                             e.baseTexture.resource.url = iArr[i]
+                            
                             return e;
                         })
-                        //console.log(spineAtlasLoader.atlas.pages)
+                        // console.log(rawSkeletonData)
                         spineJsonParser = new PIXI.spine.core.SkeletonJson(spineAtlasLoader);
+                        
                         spineData = spineJsonParser.readSkeletonData(rawSkeletonData);
-                        //console.log(spineData)
-                        // // now we can create spine instance
-                        spine = new PIXI.spine.Spine(spineData);
-                        resolve(spine)
+                        console.log(spineData)
+                        resolve(spineData)
                     } catch (error) {
                         reject(error);
                     }
                 });
             };
 
-            function spineRebuilder(skelJson, atlas, zip) {
+            async function spineRebuilder(skelJson, atlas, zip) {
                 console.log(zip)
                 //your skeleton.json file here
                 var rawSkeletonData = JSON.parse(skelJson);
                 //console.log(rawSkeletonData );
                 let iArr = null;
-                (async function () {
-                    iArr = await Promise.all(
-                        rawSkeletonData.skeleton.images.map(async e => {
-                            return await zip.file(e).async('arraybuffer').then(c => {
-                                var blob = new Blob(new Array(c), {'type': 'image/png'})
-                                return window.URL.createObjectURL(blob);
-                            })
-                        }));
-                    console.log(rawSkeletonData.skeleton.images);
-                    console.log(iArr)
-                    await applyer(rawSkeletonData, atlas, iArr).then(x => console.log(x));
-                })();
+                iArr = await Promise.all(
+                    rawSkeletonData.skeleton.images.map(async e => {
+                        return await zip.file(e).async('arraybuffer').then(c => {
+                            var blob = new Blob(new Array(c), { 'type': 'image/png' })
+                            return window.URL.createObjectURL(blob);
+                        })
+                    }));
+                console.log(rawSkeletonData.skeleton.images);
+                console.log(iArr)
+                return await applyer(rawSkeletonData, atlas, iArr);
             };
 
             new requester().reqFromGD(null, atob(modelB64), 'blob')
                 .then(d => unzip(d.response, console.log('unzip done')))
                 .then(d => spineZipInit(d))
-                .then(arr => spineRebuilder(arr[0], arr[1], arr[2]));
+                .then(arr => spineRebuilder(arr[0], arr[1], arr[2]))
+                .then(rendering);
+
+            function rendering(spineData) {
+                app = new PIXI.Application();
+                document.body.append(app.view);
+                //console.log(spineData)
+                // // now we can create spine instance
+                const model = new PIXI.spine.Spine(spineData);
+                model.x = (app.screen.width / 2); // this.app.screen.width/2; // this.app.screen.width;
+                model.y = app.screen.height; // this.app.screen.height;
+                //model.scale.set(this.scale);
+                model.scale.set(0.25);
+                /* debug*/
+                //model.drawDebug = true;
+                // model.drawBones = true;
+                //model.drawRegionAttachments = true;
+                //model.drawClipping = true;
+                //model.drawMeshHull = true;
+                // model.drawMeshTriangles = true;
+                //model.drawPaths = true;
+                //model.drawBoundingBoxes = true;
+                console.log(model)
+                app.stage.addChild(model);
+                //console.log(model)
+               
+
+                // Press the screen to play a random animation
+                // app.stage.on('pointerdown', () => {
+                //     let animation = '';
+                //     do {
+                //         animation = this.model.now.aAni[Math.floor(Math.random() * this.model.now.aAni.length)];
+                //     } while (animation === this.model.now.nAni.n);
+                //     console.log(animation);
+                //     model.state.setAnimation(0, animation, loopAnimations.includes(animation));
+                // });
+            }
         }
     </script>
 </head>
