@@ -33,9 +33,9 @@ class l2dSpine {
         console.log('init');
         // create a spine boy
         const Modelkeys = Object.keys(res);
-
+        console.log(res[Modelkeys[0]])
         const model = new PIXI.spine.Spine(res[Modelkeys[0]].spineData);
-
+        
         let ar = res[Modelkeys[0]].metadata.ar;
         ar = ar ? (typeof ar == 'string' ? ar.split(',').map(x => Number(x)) : ar) : null;
         const loopAnimations = [];
@@ -280,6 +280,6 @@ class l2dSpine {
                 return e;
             })());
         })(stmsg, document);
-        this.requestModule.req('get', './asset/assetList.json').then(xhr => this.slBoxRender(JSON.parse(xhr.response)));
+        this.requestModule.req('./asset/assetList.json').then(xhr => this.slBoxRender(JSON.parse(xhr.response)));
     };
 };

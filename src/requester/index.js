@@ -48,51 +48,65 @@ class requester extends gdMgr {
     };
     /**
      * xhr to promise.
-     * @param {string} method method to get, post.
      * @param {string} url target url
-     * @param {string} type a response type.
-     * @param {string} data a post data.
-     * @param {Object} process on load process object.
-     * @param {function(e)} process.loading a loading function
-     * @param {function(e)} process.loadStart a loadStart function
+     * @param {Object} option on load process object.
+     * @param {string} option.method method to get, post.
+     * @param {string} option.type a response type.
+     * @param {Object} option.process on load process object.
+     * @param {function(e)} option.process.loading a loading function
+     * @param {function(e)} option.process.loadStart a loadStart function
+     * @param {boolean} option.usefetch use feach
+     * @param {*} data a post data.
      * @returns {Promise}
      * @example
      * req('get','http://www.example.com/',null,null,{loadStart:e=>console.log(`now onstart Downloading ${e.total} bytes`),loading:e=>console.log(`${Math.round(100 * e.loaded / e.total)}% Complete`)})
      */
-    req(method, url, type, data = {},process) {
-        const xhr = new XMLHttpRequest();
-        return new Promise((resolve, reject) => {
-            if (type) {
-                xhr.responseType = type;
-            }
-            if(process){
-                if(process.loadStart){
-                    xhr.onloadstart = process.loadStart;
+    req(url, option, data) {
+        option = option?option:{};
+        let xhr = null;
+        if (!option.usefetch) {
+            xhr = new XMLHttpRequest();
+            return new Promise((resolve, reject) => {
+                if (option.type) {
+                    xhr.responseType = option.type;
                 }
-                if(process.loading){
-                    xhr.onprogress =process.loading;
+                if (option.process) {
+                    if (option.process.loadStart) {
+                        xhr.onloadstart = option.process.loadStart;
+                    }
+                    if (option.process.loading) {
+                        xhr.onprogress = option.process.loading;
+                    }
                 }
+
+                xhr.open(option.method ? option.method : 'get', url, true);
+                xhr.onload = () => resolve(xhr);
+                xhr.onerror = () => reject(xhr);
+                data != {} ? xhr.send(JSON.stringify(data)) : xhr.send();
+            });
+        } else {
+            if (data) {
+                option.body = data;
             }
-            
-            xhr.open(method ? method : 'get', url, true);
-            xhr.onload = () => resolve(xhr);
-            xhr.onerror = () => reject(xhr);
-            data != {} ? xhr.send(JSON.stringify(data)) : xhr.send();
-        });
+            return fetch(url, option)
+        }
+
     };
     /**
-     * 
-     * @param {string} method method to get, post.
      * @param {string} url target url
-     * @param {string} type a response type.
-     * @param {string} data a post data.
-     * @param {Object} process on load process object.
-     * @param {function(e)} process.loading a loading function
-     * @param {function(e)} process.loadStart a loadStart function
+     * @param {Object} option on load process object.
+     * @param {string} option.method method to get, post.
+     * @param {string} option.type a response type.
+     
+     * @param {Object} option.process on load process object.
+     * @param {function(e)} option.process.loading a loading function
+     * @param {function(e)} option.process.loadStart a loadStart function
+     * @param {boolean} option.usefetch use feach
+     * @param {*} data a post data.
      * @returns {Promise}
      */
-    reqFromGD(method, url, type, data = {},process) {
+    reqFromGD(url, option, data) {
         url = this.getLink(url);
-        return this.req(method, url, type, data,process)
+        return this.req(url, option, data)
     }
 };
