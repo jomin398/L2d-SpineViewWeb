@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.1.3/pixi.min.js"></script>
+    <script src="./src/pSpine/dist/pixi-spine.js"></script>
+    <script src="./src/requester/lib/zipper/index.js"></script>
+    <script src="./src/requester/index.js"></script>
+    <title>Spine Model Load From Zip</title>
+    <script>
+        //'https://drive.google.com/file/d/1elbseW4qwhLotjAd87RowrMK1ahySR5Q/view?usp=sharing'
+        var modelB64 = 'aHR0cHM6Ly9kcml2ZS5nb29nbGUuY29tL2ZpbGUvZC8xZWxic2VXNHF3aExvdGpBZDg3Um93ck1LMWFoeVNSNVEvdmlldz91c3A9c2hhcmluZw';
+        var app = null;
+        async function spineZipInit(zip) {
+            // is spine?
+            let assetPrefixs = ['atlas', 'json'];
+            let atlas, bool, links = [];
+            atlas = Object.keys(zip.files).find(x => x.includes(assetPrefixs[0]))
+            bool = atlas.includes(assetPrefixs[0]);
+            console.log(bool);
+            if (bool) {
+                skelJson = Object.keys(zip.files).find(x => x.includes('json'));
+                skelJson = await zip.file(skelJson).async('blob').then(l => { u = window.URL.createObjectURL(l); links.push(u); return u; });
+                atlas = await zip.file(atlas).async('blob').then(l => { u = window.URL.createObjectURL(l); links.push(u); return u; });
+
+                skelJson = await new requester().req(skelJson).then(res => {
+                    //window.URL.revokeObjectURL(skelJson);
+                    return res.response
+                });
+                atlas = await new requester().req(atlas).then(res => {
+                    //window.URL.revokeObjectURL(atlas);
+                    return res.response
+                });
+
+                return Promise.resolve([skelJson, atlas, zip, links]);
+            }
+        };
+
+        async function spineRebuilder(arr) {
+            // 0:skelJson, 1:atlas, 2:zip, 3:links
+            console.log(arr[2])
+            //your skeleton.json file here
+            var rawSkeletonData = JSON.parse(arr[0]);
+            var rawAtlasData = arr[1];
+            console.log(rawSkeletonData);
+            let iNrr = rawSkeletonData.skeleton.images;
+            console.log(iNrr);
+            iArr = await Promise.all(
+                iNrr.map(async e => {
+                    return await arr[2].file(e).async('arraybuffer').then(c => {
+                        var blob = new Blob(new Array(c), { 'type': 'image/png' })
+                        return PIXI.BaseTexture.from(window.URL.createObjectURL(blob));
+                    })
+                }));
+            //console.log(rawSkeletonData.skeleton.images);
+            console.log(iArr)
+
+            var spineAtlas = new PIXI.spine.core.TextureAtlas(rawAtlasData, function (line, callback) {
+                // pass the image here.
+                callback(iArr[iNrr.indexOf(line)])
+            }); // specify path, image.png will be added automatically
+            var spineAtlasLoader = new PIXI.spine.core.AtlasAttachmentLoader(spineAtlas)
+            var spineJsonParser = new PIXI.spine.core.SkeletonJson(spineAtlasLoader);
+            var spineData = spineJsonParser.readSkeletonData(rawSkeletonData);
+            spineData.imagesPath = iArr;
+            return Promise.resolve(spineData);
+        };
+
+        function rendering(spineData) {
+            //console.log(spineData)
+            // // now we can create spine instance
+            const model = new PIXI.spine.Spine(spineData);
+            console.log(model);
+            loopAnimations = [];
+            nAni = '';
+            sAni = model.spineData.animations.map(e => e.name);
+            aAni = [].concat(sAni, loopAnimations);
+            console.log(aAni);
+            model.x = (app.screen.width / 2); // this.app.screen.width/2; // this.app.screen.width;
+            model.y = app.screen.height; // this.app.screen.height;
+            //model.scale.set(this.scale);
+            model.scale.set(0.25);
+            //model.scale.set(0.25);
+            /* debug*/
+            //model.drawDebug = true;
+            // model.drawBones = true;
+            //model.drawRegionAttachments = true;
+            //model.drawClipping = true;
+            //model.drawMeshHull = true;
+            // model.drawMeshTriangles = true;
+            //model.drawPaths = true;
+            //model.drawBoundingBoxes = true;
+
+            app.stage.addChild(model);
+            //console.log(model)
+
+
+            // Press the screen to play a random animation
+            console.log(aAni)
+            app.stage.on('pointerdown', () => {
+                let animation = '';
+                do {
+                    animation = aAni[Math.floor(Math.random() * aAni.length)];
+                } while (animation === nAni);
+                console.log(animation);
+                model.state.setAnimation(0, animation, loopAnimations.includes(animation));
+                nAni = animation;
+            });
+            this.app.stage.interactive = true;
+            console.log(app.stage)
+        }
+
+        window.onload = () => {
+            app = new PIXI.Application();
+            document.body.append(app.view);
+            let tstyle = { fontFamily: 'Arial', fontSize: 24, fill: 'white', align: 'center' };
+            let text = new PIXI.Text('This is a PixiJS text',tstyle);
+            text.updateText();
+
+            app.stage.addChild(text);
+
+
+            //new requester().reqFromGD(atob(modelB64), { usefetch: true })
+            //.then(d => new zip(d.blob()).unzip(console.log('unziping...'),console.log('unzip done')))
+            //.then(spineZipInit)
+            //.then(spineRebuilder)
+            //.then(rendering)
+        }
+    </script>
+
+</head>
+
+<body>
+
+</body>
+
+</html>
