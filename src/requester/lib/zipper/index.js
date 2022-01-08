@@ -25,11 +25,17 @@ class zip {
                 let d = await JSZip.loadAsync(this.target);
                 res(d)
             } catch (error) {
-                rej(e)
+                rej(error)
             }
             if(onDone){
                 onDone();
             }
         });
+    };
+    zip2Link(file,type){
+        //this.unzip()
+        /*
+        await zip.file(skelJson).async('blob').then(l => { u = window.URL.createObjectURL(l); links.push(u); return u; });
+        */
     }
 }
