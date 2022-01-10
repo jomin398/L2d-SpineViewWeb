@@ -16,10 +16,35 @@
         //'https://drive.google.com/file/d/1elbseW4qwhLotjAd87RowrMK1ahySR5Q/view?usp=sharing'
         var modelB64 = 'aHR0cHM6Ly9kcml2ZS5nb29nbGUuY29tL2ZpbGUvZC8xZWxic2VXNHF3aExvdGpBZDg3Um93ck1LMWFoeVNSNVEvdmlldz91c3A9c2hhcmluZw';
         var app = null;
+
+        window.onload = () => pageload();
+        const iloaderOptions = {
+            loadType: PIXI.LoaderResource.LOAD_TYPE.IMAGE,
+            xhrType: PIXI.LoaderResource.XHR_RESPONSE_TYPE.BLOB
+        };
+        const spineLoaderOptions = {
+            metadata: {
+                images: {
+                    //"page_0": PIXI.BaseTexture.fromImage("something1.jpg"),
+                    //"page_1": PIXI.BaseTexture.fromCanvas(myGeneratedCanvas)
+                }
+            }
+        };
+        function pageload() {
+            app = new PIXI.Application();
+            document.body.append(app.view);
+
+            new requester().reqFromGD(atob(modelB64), { type: "arraybuffer" })
+                .then(d => new zip(d.response).unzip(console.log('unziping...'), console.log('unzip done')))
+                .then(spineZipInit)
+                .then(spineRebuilder)
+                .then(a => onAssetsLoaded(a[0], a[1]))
+        }
         async function spineZipInit(zip) {
-            // is spine?
             let assetPrefixs = ['atlas', 'json'];
             let atlas, bool, links = [];
+
+
             atlas = Object.keys(zip.files).find(x => x.includes(assetPrefixs[0]))
             bool = atlas.includes(assetPrefixs[0]);
             console.log(bool);
@@ -41,37 +66,27 @@
                 console.log(iNrr);
                 iArr = await Promise.all(
                     iNrr.map(async e => {
-                        return await zip.file(e).async('arraybuffer').then(c => {
+                        return await zip.file(e).async('arraybuffer').then(async c => {
                             var blob = new Blob(new Array(c), { 'type': 'image/png' })
-                            return PIXI.BaseTexture.from(window.URL.createObjectURL(blob));
+                            return await PIXI.BaseTexture.from(window.URL.createObjectURL(blob));
                         })
                     }));
                 //console.log(rawSkeletonData.skeleton.images);
-                console.log(iArr)
                 return Promise.resolve([skelJson, rawSkeletonData, atlas, zip, links, iArr, iNrr]);
             }
-        };
 
-        async function spineRebuilder(arr) {
-            // 0:skelJson,1:rawSkel, 2:atlas, 3:zip, 4:links, 5:iArr, 6:iNrr;
-            console.log(arr[3])
-            //your skeleton.json file here
-            var spineAtlas = new PIXI.spine.core.TextureAtlas(arr[2], function (line, callback) {
-                // pass the image here.
-                callback(arr[5][arr[6].indexOf(line)])
-            }); // specify path, image.png will be added automatically
-            var spineAtlasLoader = new PIXI.spine.core.AtlasAttachmentLoader(spineAtlas)
-            var spineJsonParser = new PIXI.spine.core.SkeletonJson(spineAtlasLoader);
-            var spineData = spineJsonParser.readSkeletonData(arr[1]);
-            spineData.imagesPath = arr[5];
-            return Promise.resolve(spineData);
-        };
+        }
 
-        function rendering(spineData) {
-            //console.log(spineData)
-            // // now we can create spine instance
-            const model = new PIXI.spine.Spine(spineData);
-            console.log(model);
+        function onAssetsLoaded(loader, res) {
+            let model = null;
+            const Modelkeys = Object.keys(res);
+            console.log(`chrname : ${Modelkeys[0]}\ndata:`, res[Modelkeys[0]]);
+            try {
+                model = new PIXI.spine.Spine(res[Modelkeys[0]].spineData);
+            } catch (error) {
+                console.log(error)
+            }
+            console.log(model)
             loopAnimations = [];
             nAni = '';
             sAni = model.spineData.animations.map(e => e.name);
@@ -93,7 +108,25 @@
             //model.drawBoundingBoxes = true;
 
             app.stage.addChild(model);
-            //console.log(model)
+
+            let tstyle = { fontFamily: 'Arial', fontSize: 20, fill: 'white' };
+            let textArr = [
+                new PIXI.Text('Warning', { fontFamily: 'Arial', fontSize: 20, fill: 'red'}),
+                new PIXI.Text('Texture can be shows Dark SomeTimes. (Zip RenderingError)', tstyle)
+            ];
+            // textArr[0].interactive = true;
+            // textArr[0].click = function (e) {
+            //     app.stage.removeChild(textArr[0])
+            // };
+            app.stage.addChild(textArr[0]);
+
+            textArr[1].x = textArr[0].width+5;
+            // textArr[1].interactive = true;
+            // textArr[1].click = function (e) {
+            //     app.stage.removeChild(textArr[1])
+            // };
+            app.stage.addChild(textArr[1]);
+            // console.log(model)
 
 
             // Press the screen to play a random animation
@@ -107,25 +140,39 @@
                 model.state.setAnimation(0, animation, loopAnimations.includes(animation));
                 nAni = animation;
             });
-            this.app.stage.interactive = true;
-            console.log(app.stage)
+            app.stage.interactive = true;
+            console.log(app.stage);
+            document.body.appendChild((()=>{
+                let b = document.createElement('button');
+                b.innerText = 'Page Reload';
+                b.style.fontSize = '24px';
+                b.onclick = ()=>location.reload();
+                b.id = 'pReload';
+                return b;
+            })())
         }
 
-        window.onload = () => {
-            app = new PIXI.Application();
-            document.body.append(app.view);
-            let tstyle = { fontFamily: 'Arial', fontSize: 24, fill: 'white', align: 'center' };
-            //let text = new PIXI.Text('This is a PixiJS text',tstyle);
-            //text.updateText();
-
-            // app.stage.addChild(text);
+        async function spineRebuilder(arr) {
+            // 0:skelJson,1:rawSkel, 2:atlas, 3:zip, 4:links, 5:iArr, 6:iNrr;
+            //console.log(arr[3]);
+            console.log(arr[5])
 
 
-            new requester().reqFromGD(atob(modelB64), { type: "arraybuffer" })
-                .then(d => new zip(d.response).unzip(console.log('unziping...'), console.log('unzip done')))
-                .then(spineZipInit)
-                .then(spineRebuilder)
-                .then(rendering)
+            //your skeleton.json file here
+            var spineAtlas = new PIXI.spine.core.TextureAtlas(arr[2], async function (line, callback) {
+                // pass the image here.
+                // let i = res[Object.keys(res)[Object.keys(res).indexOf(line)]];
+                callback(arr[5][arr[6].indexOf(line)])
+            }); // specify path, image.png will be added automatically
+            var spineAtlasLoader = new PIXI.spine.core.AtlasAttachmentLoader(spineAtlas)
+            var spineJsonParser = new PIXI.spine.core.SkeletonJson(spineAtlasLoader);
+            var spineData = spineJsonParser.readSkeletonData(arr[1]);
+            spineData.imagesPath = arr[5];
+            let cname = arr[6][0].split('.')[0];
+            console.log(spineData)
+            const resorce = {};
+            resorce[cname] = { spineData: spineData };
+            return Promise.resolve([null, resorce])
         }
     </script>
 
